@@ -14,12 +14,12 @@ export function BackLink({ href, label, className }: { href: string; label: stri
   const content = (
     <>
       <ArrowLeft className="size-4" aria-hidden="true" />
-      {label}
+      <span className="font-mono">{label}</span>
     </>
   )
 
   const sharedClassName = cn(
-    "inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground",
+    "press-feedback inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground",
     className
   )
 

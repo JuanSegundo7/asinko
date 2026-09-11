@@ -62,7 +62,9 @@ export default function ThesisDetailPage() {
           </time>
         </header>
 
-        <p className="mt-3 text-xl font-semibold leading-snug text-foreground">{thesis.claim}</p>
+        <p className="mt-3 font-serif text-2xl font-medium leading-snug text-foreground">
+          {thesis.claim}
+        </p>
 
         {asset && rates ? (
           <ThesisDataGrid

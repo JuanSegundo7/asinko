@@ -43,7 +43,11 @@ export default function AssetPage() {
                 <CardSkeleton />
               </>
             ) : (
-              content?.posts.map((post) => <PostCard key={post.id} post={post} />)
+              content?.posts.map((post, i) => (
+                <div key={post.id} className="stagger-item" style={{ "--stagger-index": i } as React.CSSProperties}>
+                  <PostCard post={post} />
+                </div>
+              ))
             )}
           </section>
 
@@ -57,7 +61,15 @@ export default function AssetPage() {
                 <CardSkeleton />
               </>
             ) : (
-              content?.theses.map((thesis) => <ThesisCard key={thesis.id} thesis={thesis} />)
+              content?.theses.map((thesis, i) => (
+                <div
+                  key={thesis.id}
+                  className="stagger-item"
+                  style={{ "--stagger-index": i } as React.CSSProperties}
+                >
+                  <ThesisCard thesis={thesis} />
+                </div>
+              ))
             )}
           </section>
         </main>

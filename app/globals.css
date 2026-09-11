@@ -9,6 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-serif);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -126,5 +127,41 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+:root {
+  /* Curvas de easing propias — las de CSS por defecto son demasiado planas para sentirse intencionales. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Feedback de presión: instantáneo, sutil, solo transform (no dispara layout/paint). */
+.press-feedback {
+  transition: transform 150ms var(--ease-out-strong);
+}
+.press-feedback:active {
+  transform: scale(0.97);
+}
+
+/* Entrada escalonada de las cards al montar el feed. Decorativa — nunca bloquea la interacción. */
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-item {
+  animation: stagger-in 300ms var(--ease-out-strong) backwards;
+  animation-delay: calc(var(--stagger-index, 0) * 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-item {
+    animation: none;
   }
 }

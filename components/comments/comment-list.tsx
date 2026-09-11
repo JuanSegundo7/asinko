@@ -52,7 +52,7 @@ export function CommentList({ contentId }: { contentId: string }) {
           type="button"
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          className="mt-2 min-h-11 text-sm font-medium text-foreground hover:underline disabled:opacity-50"
+          className="press-feedback mt-2 min-h-11 text-sm font-medium text-foreground hover:underline disabled:opacity-50"
         >
           {isFetchingNextPage ? "Cargando…" : `Ver ${total - comments.length} comentarios más`}
         </button>

@@ -21,7 +21,7 @@ export function ThesisStrip({ theses }: { theses: Thesis[] }) {
       onClick={() =>
         document.getElementById("tesis")?.scrollIntoView({ behavior: "smooth", block: "start" })
       }
-      className="flex min-h-11 w-full items-center justify-center border-b border-border bg-muted/40 text-sm font-medium text-foreground lg:hidden"
+      className="flex min-h-11 w-full items-center justify-center border-b border-border bg-muted/40 text-sm font-medium text-foreground transition-colors active:bg-muted lg:hidden"
     >
       {parts.join(" · ")}
     </button>

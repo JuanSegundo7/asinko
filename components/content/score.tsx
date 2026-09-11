@@ -13,7 +13,7 @@ export function Score({
   return (
     <span
       aria-hidden="true"
-      className={cn("font-medium tabular-nums text-muted-foreground", className)}
+      className={cn("font-mono font-medium tabular-nums text-muted-foreground", className)}
     >
       {formatScore(upvotes, downvotes)}
     </span>

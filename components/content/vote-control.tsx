@@ -103,14 +103,13 @@ function VoteButton({
       }}
       className={cn(
         "relative z-10 flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md text-sm text-muted-foreground transition-colors",
-        !disabled && "hover:bg-accent hover:text-accent-foreground active:scale-95",
+        !disabled && "press-feedback hover:bg-accent hover:text-accent-foreground",
         disabled && "cursor-not-allowed opacity-50",
-        active && activeColor,
-        "transition-transform duration-100"
+        active && activeColor
       )}
     >
       <Icon size={iconSize} fill={active ? "currentColor" : "none"} aria-hidden="true" />
-      <span aria-hidden="true" className="tabular-nums">
+      <span aria-hidden="true" className="font-mono tabular-nums">
         {count}
       </span>
     </button>

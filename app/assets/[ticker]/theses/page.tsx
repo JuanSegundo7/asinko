@@ -75,7 +75,7 @@ function FilterButton({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "min-h-11 rounded-md px-2 font-medium",
+        "press-feedback min-h-11 rounded-md px-2 font-medium",
         active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
       )}
     >

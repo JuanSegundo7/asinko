@@ -50,7 +50,7 @@ export function ThesisCard({ thesis, className }: { thesis: Thesis; className?: 
         </time>
       </header>
 
-      <p className="mt-2 text-base font-semibold leading-snug text-foreground">
+      <p className="mt-2 font-serif text-lg font-medium leading-snug text-foreground">
         {thesis.claim}
       </p>
 

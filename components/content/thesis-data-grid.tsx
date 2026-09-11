@@ -59,7 +59,7 @@ export function ThesisDataGrid({
         )}
       </Cell>
 
-      <Cell label="Convicción">
+      <Cell label="Convicción" numeric={false}>
         <ConvictionMeter conviction={thesis.conviction} className="flex-col items-start gap-1" />
       </Cell>
 
@@ -79,11 +79,24 @@ export function ThesisDataGrid({
   )
 }
 
-function Cell({ label, children }: { label: string; children: React.ReactNode }) {
+function Cell({
+  label,
+  children,
+  numeric = true,
+}: {
+  label: string
+  children: React.ReactNode
+  numeric?: boolean
+}) {
   return (
     <div className="flex flex-col gap-1 bg-card p-3">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="flex flex-col text-sm font-medium tabular-nums text-foreground">
+      <dd
+        className={cn(
+          "flex flex-col text-sm font-medium text-foreground",
+          numeric && "font-mono tabular-nums"
+        )}
+      >
         {children}
       </dd>
     </div>
