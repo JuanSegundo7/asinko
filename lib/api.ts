@@ -1,4 +1,4 @@
-import { asset, comments, exchangeRates, posts, theses } from "./mock-data"
+import { asset, comments, exchangeRates, posts, priceHistory, theses } from "./mock-data"
 import { MOCK_NOW } from "./format"
 import { toggleVote } from "./vote"
 import type {
@@ -7,6 +7,7 @@ import type {
   Content,
   ExchangeRates,
   Post,
+  PricePoint,
   Thesis,
   ThesisStatus,
   VoteDirection,
@@ -146,4 +147,10 @@ export async function addComment(contentId: string, body: string): Promise<Comme
 export async function getExchangeRates(): Promise<ExchangeRates> {
   await delay()
   return exchangeRates
+}
+
+export async function getPriceHistory(ticker: string): Promise<PricePoint[] | null> {
+  await delay()
+  if (normalizeTicker(ticker) !== asset.ticker) return null
+  return priceHistory
 }

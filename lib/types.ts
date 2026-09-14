@@ -16,7 +16,18 @@ export type Asset = {
   sector: string // "Semiconductores"
   currency: Currency // moneda nativa: "USD"
   price: number // mock
+  sharesOutstanding: number // mock — market cap se deriva de price * sharesOutstanding, no es un campo suelto
+  volume24h: number // mock, en USD
+  athPrice: number // mock
+  athDate: string // ISO UTC
 }
+
+export type PricePoint = {
+  date: string // ISO UTC, un cierre por día
+  close: number
+}
+
+export type PriceRange = "7D" | "1M" | "3M" | "1A" | "TODO"
 
 export type Comment = {
   id: string

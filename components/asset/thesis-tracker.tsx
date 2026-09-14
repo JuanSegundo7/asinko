@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { ArrowDown, ArrowUp } from "lucide-react"
+import { SquircleSurface } from "@/components/ui/squircle-surface"
 import { ThesisStatusBadge } from "@/components/content/thesis-status-badge"
 import { getConsensus, getConsensusMismatchLabel } from "@/lib/consensus"
 import { daysRemaining, formatAbsolute, formatCurrency, formatPercent } from "@/lib/format"
@@ -13,7 +14,13 @@ export function ThesisTracker({ theses, asset }: { theses: Thesis[]; asset: Asse
   if (theses.length === 0) return null
 
   return (
-    <nav aria-label="Tracker de tesis" className="flex flex-col gap-2">
+    <SquircleSurface
+      as="nav"
+      aria-label="Tracker de tesis"
+      cornerRadius={20}
+      elevation={1}
+      className="flex flex-col gap-2 p-4"
+    >
       <h2 className="text-sm font-medium text-muted-foreground">Tesis ({theses.length})</h2>
       <ul className="flex flex-col gap-1">
         {theses.map((thesis) => (
@@ -24,12 +31,12 @@ export function ThesisTracker({ theses, asset }: { theses: Thesis[]; asset: Asse
       </ul>
       <Link
         href={`/assets/${asset.ticker.toLowerCase()}/theses`}
-        onClick={markCameFromFeed}
+        onClick={() => markCameFromFeed()}
         className="mt-1 flex min-h-11 items-center text-sm font-medium text-foreground hover:underline"
       >
         Ver todas →
       </Link>
-    </nav>
+    </SquircleSurface>
   )
 }
 
@@ -40,7 +47,8 @@ function TrackerRow({ thesis, assetPriceUsd }: { thesis: Thesis; assetPriceUsd: 
   return (
     <Link
       href={href}
-      onClick={markCameFromFeed}
+      scroll={false}
+      onClick={() => markCameFromFeed(href)}
       className="flex flex-col gap-1 rounded-md p-2 text-sm hover:bg-accent"
     >
       <ThesisStatusBadge status={thesis.status} outcome={thesis.outcome} />
@@ -59,10 +67,12 @@ function TrackerRow({ thesis, assetPriceUsd }: { thesis: Thesis; assetPriceUsd: 
           <DirectionIcon className="mr-0.5 inline size-3.5" aria-hidden="true" />
           {formatCurrency(thesis.targetPrice, "USD")} · {formatAbsolute(thesis.deadline)}
           <br />
-          {getConsensus(thesis) === "FOR" ? "Consenso a favor" : "Consenso en contra"}
-          {getConsensusMismatchLabel(thesis) && (
-            <span> · {getConsensusMismatchLabel(thesis)?.toLowerCase()}</span>
-          )}
+          {getConsensusMismatchLabel(thesis) ??
+            (getConsensus(thesis) === "FOR" ? "Consenso a favor" : "Consenso en contra")}
+          {" · "}
+          <span className="tabular-nums">
+            ▲{thesis.upvotes} ▼{thesis.downvotes}
+          </span>
         </p>
       )}
     </Link>

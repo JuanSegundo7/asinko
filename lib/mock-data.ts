@@ -1,11 +1,78 @@
-import type { Asset, Comment, ExchangeRates, Post, Thesis } from "./types"
+import type { Asset, Comment, ExchangeRates, Post, PricePoint, Thesis } from "./types"
+import { MOCK_NOW } from "./format"
+
+const ASSET_PRICE = 185.2
+const HISTORY_DAYS = 400
+/** T2 (semilla) cerró en $178.40 el 2026-06-30: la serie de precio tiene que pasar por ese punto exacto para no contradecir un dato que ya está en el seed. */
+const T2_RESOLUTION_DATE = "2026-06-30T21:00:00.000Z"
+const T2_RESOLUTION_PRICE = 178.4
+
+/** PRNG determinístico (sin dependencias) — misma semilla siempre da la misma serie entre reloads, nunca Math.random() en cada render. */
+function mulberry32(seed: number) {
+  return function random() {
+    seed |= 0
+    seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/**
+ * Serie de precio mock: caminata aleatoria de semilla fija, reescalada para terminar exactamente
+ * en `finalPrice` el día de hoy (MOCK_NOW), con una corrección lineal suave en el tramo final para
+ * que además pase exacto por el cierre real de T2 el día de su resolución — así el gráfico nunca
+ * contradice un número que el propio seed ya fija.
+ */
+function buildPriceHistory(finalPrice: number): PricePoint[] {
+  const rand = mulberry32(20260910)
+  const levels: number[] = []
+  let level = 1
+  for (let i = 0; i < HISTORY_DAYS; i++) {
+    const change = (rand() - 0.47) * 0.035 // leve sesgo alcista, volatilidad diaria ~1.7%
+    level *= 1 + change
+    levels.push(level)
+  }
+
+  const scale = finalPrice / levels[levels.length - 1]
+  const scaled = levels.map((l) => l * scale)
+
+  const idxEnd = HISTORY_DAYS - 1
+  const daysAgoT2 = Math.round((MOCK_NOW.getTime() - new Date(T2_RESOLUTION_DATE).getTime()) / 86_400_000)
+  const idxT2 = idxEnd - daysAgoT2
+  const rawT2 = scaled[idxT2]
+  const rawEnd = scaled[idxEnd]
+  for (let i = idxT2; i <= idxEnd; i++) {
+    const t = (i - idxT2) / (idxEnd - idxT2)
+    const linearTarget = T2_RESOLUTION_PRICE + t * (finalPrice - T2_RESOLUTION_PRICE)
+    const linearRaw = rawT2 + t * (rawEnd - rawT2)
+    scaled[i] += linearTarget - linearRaw
+  }
+  scaled[idxT2] = T2_RESOLUTION_PRICE
+  scaled[idxEnd] = finalPrice
+
+  return scaled.map((close, i) => {
+    const daysAgo = idxEnd - i
+    const date = new Date(MOCK_NOW.getTime() - daysAgo * 86_400_000)
+    return { date: date.toISOString(), close: Math.round(close * 100) / 100 }
+  })
+}
+
+export const priceHistory: PricePoint[] = buildPriceHistory(ASSET_PRICE)
+
+/** ATH derivado de la propia serie (no un número suelto) — así nunca puede quedar por debajo del precio actual o de algún punto histórico por error de tipeo. */
+const athPoint = priceHistory.reduce((max, p) => (p.close > max.close ? p : max), priceHistory[0])
 
 export const asset: Asset = {
   ticker: "NVDA",
   name: "NVIDIA Corp.",
   sector: "Semiconductores",
   currency: "USD",
-  price: 185.2,
+  price: ASSET_PRICE,
+  sharesOutstanding: 24_300_000_000, // mock, orden de magnitud real de NVDA — market cap se deriva de esto, no es un campo suelto
+  volume24h: 28_400_000_000, // mock
+  athPrice: athPoint.close,
+  athDate: athPoint.date,
 }
 
 export const exchangeRates: ExchangeRates = {

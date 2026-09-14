@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Currency } from "@/lib/types"
 
 const CURRENCIES: Currency[] = ["USD", "EUR", "GBP", "JPY"]
@@ -47,26 +48,25 @@ export function CurrencySelector() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function handleChange(value: string) {
+  function handleChange(value: string | null) {
+    if (!value) return
     const params = new URLSearchParams(searchParams.toString())
     params.set("currency", value)
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
   }
 
   return (
-    <label className="inline-flex items-center gap-1">
-      <span className="sr-only">Divisa</span>
-      <select
-        value={current ?? "USD"}
-        onChange={(e) => handleChange(e.target.value)}
-        className="min-h-11 rounded-md border border-border bg-background px-2 text-sm font-medium text-foreground"
-      >
+    <Select value={current ?? "USD"} onValueChange={handleChange}>
+      <SelectTrigger aria-label="Divisa" className="min-h-11 font-medium">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
         {CURRENCIES.map((currency) => (
-          <option key={currency} value={currency}>
+          <SelectItem key={currency} value={currency}>
             {currency}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-    </label>
+      </SelectContent>
+    </Select>
   )
 }

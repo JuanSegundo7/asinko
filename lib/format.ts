@@ -49,19 +49,26 @@ export function formatAbsoluteFull(iso: string): string {
   }).format(new Date(iso))
 }
 
-/** Días restantes hasta el deadline (puede ser negativo si ya pasó). */
+/** Días de calendario restantes hasta el deadline (puede ser negativo si ya pasó). Compara fechas UTC, ignorando la hora del día, para que la hora exacta del deadline no corra el conteo un día. */
 export function daysRemaining(deadlineIso: string, now: Date = MOCK_NOW): number {
-  return Math.ceil((new Date(deadlineIso).getTime() - now.getTime()) / DAY)
+  const deadline = new Date(deadlineIso)
+  const deadlineUtcDay = Date.UTC(deadline.getUTCFullYear(), deadline.getUTCMonth(), deadline.getUTCDate())
+  const nowUtcDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  return Math.round((deadlineUtcDay - nowUtcDay) / DAY)
 }
 
 const MINUS_SIGN = "−"
 
-/** Signo real "−" (no guion), "0" sin signo cuando el score es neutro. */
-export function formatScore(upvotes: number, downvotes: number): string {
-  const net = upvotes - downvotes
+/** Signo real "−" (no guion), "0" sin signo cuando el neto es 0. Compartido por formatScore (upvotes/downvotes de una pieza) y cualquier otro neto ya calculado (ej. score agregado de un contribuidor). */
+export function formatNetScore(net: number): string {
   if (net === 0) return "0"
   if (net < 0) return `${MINUS_SIGN}${Math.abs(net)}`
   return `+${net}`
+}
+
+/** Signo real "−" (no guion), "0" sin signo cuando el score es neutro. */
+export function formatScore(upvotes: number, downvotes: number): string {
+  return formatNetScore(upvotes - downvotes)
 }
 
 export function voteAriaLabel(upvotes: number, downvotes: number): string {
@@ -82,6 +89,24 @@ export function formatPercent(value: number): string {
   if (rounded === 0) return "0%"
   if (rounded < 0) return `${MINUS_SIGN}${Math.abs(rounded)}%`
   return `+${rounded}%`
+}
+
+/** Igual que formatPercent pero con 2 decimales — para variación diaria de precio ("+2.41%"), donde redondear al entero perdería toda la señal del día. */
+export function formatPercentPrecise(value: number): string {
+  const rounded = Math.round(value * 100) / 100
+  if (rounded === 0) return "0%"
+  const sign = rounded < 0 ? MINUS_SIGN : "+"
+  return `${sign}${Math.abs(rounded).toFixed(2)}%`
+}
+
+/** "$4.5T" / "$28.4B" — para market cap y volumen, donde el valor completo en USD no cabe ni aporta nada. */
+export function formatCompactUsd(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 2,
+  }).format(amount)
 }
 
 export function convertFromUSD(

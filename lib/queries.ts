@@ -12,6 +12,7 @@ import {
   getCommentPreview,
   getExchangeRates,
   getPost,
+  getPriceHistory,
   getTheses,
   getThesis,
   voteComment,
@@ -39,6 +40,7 @@ export const queryKeys = {
     ["comments", contentId, sort] as const,
   commentPreview: (contentId: string) => ["commentPreview", contentId] as const,
   exchangeRates: () => ["exchangeRates"] as const,
+  priceHistory: (ticker: string) => ["priceHistory", ticker] as const,
 }
 
 type AssetContent = { posts: Post[]; theses: Thesis[] }
@@ -77,6 +79,14 @@ export function useExchangeRatesQuery() {
   return useQuery({
     queryKey: queryKeys.exchangeRates(),
     queryFn: getExchangeRates,
+    staleTime: Infinity,
+  })
+}
+
+export function usePriceHistoryQuery(ticker: string) {
+  return useQuery({
+    queryKey: queryKeys.priceHistory(ticker),
+    queryFn: () => getPriceHistory(ticker),
     staleTime: Infinity,
   })
 }
