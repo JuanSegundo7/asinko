@@ -1,17 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CommentSort } from "./comment-sort"
 import { CommentInput } from "./comment-input"
 import { CommentItem, CommentItemSkeleton } from "./comment-item"
 import { useCommentsInfiniteQuery } from "@/lib/queries"
 import type { CommentSort as CommentSortValue } from "@/lib/types"
 
-/** Sección de comentarios del detalle (D3): primeros 5 + "Ver N más" paginado, toggle de sort, input de alta. */
+/**
+ * Sección de comentarios del detalle (D3): primeros 5 + "Ver N más" paginado, toggle de sort,
+ * input de alta. Las cards abren el detalle con foco en comentarios vía "#comentarios" (D5), pero
+ * los links que lo hacen usan scroll={false} (D2: no reposicionar la ventana del feed al abrir el
+ * panel interceptado) — por eso el salto se hace acá a mano, sobre el contenedor con overflow más
+ * cercano (la ventana en la página completa, el propio panel en el modo interceptado).
+ */
 export function CommentList({ contentId }: { contentId: string }) {
   const [sort, setSort] = useState<CommentSortValue>("TOP")
   const { data, isPending, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useCommentsInfiniteQuery(contentId, sort)
+
+  useEffect(() => {
+    // Solo al montar: es el foco inicial al abrir el detalle, no debe repetirse en cada re-render.
+    if (window.location.hash === "#comentarios") {
+      document.getElementById("comentarios")?.scrollIntoView({ block: "start" })
+    }
+  }, [])
 
   const comments = data?.pages.flatMap((page) => page.items) ?? []
   const total = data?.pages[0]?.total ?? 0

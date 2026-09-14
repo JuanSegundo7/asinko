@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,6 +38,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-accent-text: var(--accent-text);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -49,73 +50,51 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/**
+ * Tema único oscuro (D8/D10): dashboard financiero. No hay toggle claro/oscuro en la app,
+ * así que los valores van directo en :root — no existe una variante ".dark" separada.
+ *
+ * D12: paleta tomada directamente de la imagen de referencia del usuario (dashboard fintech
+ * estilo Bitcoin) — fondo navy muy oscuro (no negro puro) y azul/verde/rojo más saturados que
+ * los colores de sistema de Apple usados en D11. Mismos NOMBRES/roles de variable que D8/D11 (un
+ * solo acento, verde/rojo reservados) — cambia el valor hex, no el significado semántico.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0a0d14; /* navy casi negro de la referencia */
+  --foreground: #f5f6f8;
+  --card: #131722; /* surface de las cards/panel de la referencia */
+  --card-foreground: #f5f6f8;
+  --popover: #131722;
+  --popover-foreground: #f5f6f8;
+  --primary: #4f7dfa; /* azul saturado de la referencia (nav activo, badge "Abierta") */
+  --primary-foreground: #ffffff;
+  --secondary: #1a1f2b; /* surface-2: grilla, inputs, hover */
+  --secondary-foreground: #f5f6f8;
+  --muted: #1a1f2b;
+  --muted-foreground: #8b93a7; /* gris azulado de metadata en la referencia */
+  --accent: #1a1f2b; /* neutro, solo para hovers sin significado semántico */
+  --accent-foreground: #f5f6f8;
+  --destructive: #ef4444;
+  --border: #232838;
+  --input: #232838;
+  --ring: #7aa2ff; /* foco visible */
+  --positive: #22c55e; /* verde saturado de la referencia — solo "Acertada" y upvote activo */
+  --negative: #ef4444; /* rojo saturado de la referencia — solo "Incorrecta" y downvote activo */
+  --accent-text: #7aa2ff; /* link */
+  --chart-1: #7aa2ff;
+  --chart-2: #8b93a7;
+  --chart-3: #22c55e;
+  --chart-4: #ef4444;
+  --chart-5: #f5f6f8;
+  --radius: 0.75rem;
+  --sidebar: #131722;
+  --sidebar-foreground: #f5f6f8;
+  --sidebar-primary: #4f7dfa;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1a1f2b;
+  --sidebar-accent-foreground: #f5f6f8;
+  --sidebar-border: #232838;
+  --sidebar-ring: #7aa2ff;
 }
 
 @layer base {
@@ -133,6 +112,37 @@
 :root {
   /* Curvas de easing propias — las de CSS por defecto son demasiado planas para sentirse intencionales. */
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Escala de elevación (D10): sombras suaves y grandes, no la sombra dura por defecto del navegador. */
+  --shadow-elevation-1: 0 1px 2px rgb(0 0 0 / 0.24), 0 2px 8px rgb(0 0 0 / 0.16);
+  --shadow-elevation-2: 0 4px 16px rgb(0 0 0 / 0.32), 0 2px 6px rgb(0 0 0 / 0.2);
+  --shadow-elevation-3: 0 12px 48px rgb(0 0 0 / 0.45), 0 4px 12px rgb(0 0 0 / 0.3);
+}
+
+/**
+ * Vidrio (D10): solo para chrome estructural que tiene contenido scrolleando detrás (header, nav,
+ * tab bar, drawer) — nunca en cards de contenido en flujo normal, donde no hay nada detrás que
+ * desenfocar (ver DECISIONS.md). Fallback a superficie sólida si el usuario pidió menos transparencia.
+ */
+.glass-surface {
+  background: color-mix(in oklch, var(--card) 72%, transparent);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+.glass-surface-dense {
+  background: color-mix(in oklch, var(--card) 85%, transparent);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-surface,
+  .glass-surface-dense {
+    background: var(--card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 /* Feedback de presión: instantáneo, sutil, solo transform (no dispara layout/paint). */
@@ -165,3 +175,4 @@
     animation: none;
   }
 }
+

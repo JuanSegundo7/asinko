@@ -30,27 +30,33 @@ export function ThesisDataGrid({
       : null
 
   const days = daysRemaining(thesis.deadline)
+  const gapPct = ((thesis.targetPrice - assetPriceUsd) / assetPriceUsd) * 100
+  const DirectionIcon = thesis.direction === "ABOVE" ? ArrowUp : ArrowDown
+  // D15: dirección/variación de precio es dominio de mercado, no de voto/score — mismo criterio
+  // ya establecido en D9 para el gráfico de precio, no pisa la regla de D6/D8 (esa es sobre
+  // voto/consenso/resultado, no sobre hacia dónde apunta un precio).
+  const directionColorClass = thesis.direction === "ABOVE" ? "text-positive" : "text-negative"
+  const gapColorClass = gapPct === 0 ? "text-muted-foreground" : gapPct > 0 ? "text-positive" : "text-negative"
 
   return (
     <dl
       className={cn(
-        "grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4",
+        // @container en el ancestro (ThesisCard/ThesisDetail): esto tiene que responder al ancho
+        // real de la card, no al del viewport — con la card en un grid de 2 columnas, un breakpoint
+        // de viewport (`sm:`) se activa igual aunque la card sea angosta, rompiendo la grilla.
+        "grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border @[340px]:grid-cols-4",
         className
       )}
     >
       <Cell label="Precio objetivo">
-        <span className="inline-flex items-center gap-1">
-          {thesis.direction === "ABOVE" ? (
-            <ArrowUp className="size-4 text-muted-foreground" aria-hidden="true" />
-          ) : (
-            <ArrowDown className="size-4 text-muted-foreground" aria-hidden="true" />
-          )}
-          {formatCurrency(thesis.targetPrice, "USD")}
+        <span className={cn("inline-flex items-center gap-1", directionColorClass)}>
+          <DirectionIcon className="size-4" aria-hidden="true" />
+          <span className="text-foreground">{formatCurrency(thesis.targetPrice, "USD")}</span>
         </span>
         {secondary && <span className="text-xs text-muted-foreground">≈ {secondary}</span>}
       </Cell>
 
-      <Cell label="Deadline">
+      <Cell label="Deadline" numeric={false}>
         {formatAbsolute(thesis.deadline)}
         {thesis.status === "OPEN" && (
           <span className="text-xs text-muted-foreground">
@@ -67,9 +73,7 @@ export function ThesisDataGrid({
         {thesis.status === "OPEN" ? (
           <>
             {formatCurrency(assetPriceUsd, "USD")}
-            <span className="text-xs text-muted-foreground">
-              faltan {formatPercent(((thesis.targetPrice - assetPriceUsd) / assetPriceUsd) * 100)}
-            </span>
+            <span className={cn("text-xs", gapColorClass)}>faltan {formatPercent(gapPct)}</span>
           </>
         ) : (
           formatCurrency(thesis.resolutionPrice ?? 0, "USD")
@@ -89,7 +93,7 @@ function Cell({
   numeric?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-1 bg-card p-3">
+    <div className="flex flex-col gap-1 bg-muted p-3">
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd
         className={cn(

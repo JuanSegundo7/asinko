@@ -13,8 +13,8 @@ export function ThesisStatusBadge({
 }) {
   if (status === "OPEN") {
     return (
-      <Badge variant="outline" className={className}>
-        <span className="size-1.5 rounded-full bg-foreground" aria-hidden="true" />
+      <Badge variant="outline" className={cn("border-primary/30 bg-primary/10 text-primary", className)}>
+        <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
         Abierta
       </Badge>
     )
@@ -26,19 +26,11 @@ export function ThesisStatusBadge({
     <Badge
       variant="outline"
       className={cn(
-        isCorrect
-          ? "border-emerald-600/30 bg-emerald-600/10 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-400"
-          : "border-red-600/30 bg-red-600/10 text-red-700 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-400",
+        isCorrect ? "border-positive/30 bg-positive/10 text-positive" : "border-negative/30 bg-negative/10 text-negative",
         className
       )}
     >
-      <span
-        className={cn(
-          "size-1.5 rounded-full",
-          isCorrect ? "bg-emerald-600 dark:bg-emerald-400" : "bg-red-600 dark:bg-red-400"
-        )}
-        aria-hidden="true"
-      />
+      <span className={cn("size-1.5 rounded-full", isCorrect ? "bg-positive" : "bg-negative")} aria-hidden="true" />
       Cerrada · {isCorrect ? "Acertada" : "Incorrecta"}
     </Badge>
   )

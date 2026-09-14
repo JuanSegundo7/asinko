@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { cn } from "cn"
+import { SquircleSurface } from "@/components/ui/squircle-surface"
+import { UserAvatar } from "@/components/shell/user-avatar"
 import { VoteControl } from "./vote-control"
 import { CommentPreview, CommentPreviewSkeleton } from "@/components/comments/comment-preview"
 import { useCommentPreviewQuery, useVoteMutation } from "@/lib/queries"
@@ -15,20 +16,24 @@ export function PostCard({ post, className }: { post: Post; className?: string }
   const href = `/assets/${post.assetTicker.toLowerCase()}/posts/${post.id}`
 
   return (
-    <article
-      className={cn(
-        "relative rounded-lg border border-border bg-card p-4 transition-colors hover:border-foreground/30",
-        className
-      )}
+    <SquircleSurface
+      as="article"
+      cornerRadius={20}
+      elevation={1}
+      hoverElevation={2}
+      outerClassName={className}
+      className="relative p-5"
     >
       <Link
         href={href}
-        onClick={markCameFromFeed}
+        scroll={false}
+        onClick={() => markCameFromFeed(href)}
         aria-label={`Ver posteo completo de @${post.author.handle}`}
-        className="absolute inset-0 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="absolute inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       />
 
-      <header className="flex items-center gap-1.5 text-sm text-muted-foreground">
+      <header className="flex items-center gap-2 text-sm text-muted-foreground">
+        <UserAvatar handle={post.author.handle} size={28} />
         <span className="font-medium text-foreground">@{post.author.handle}</span>
         <span aria-hidden="true">·</span>
         <time dateTime={post.createdAt} title={formatAbsoluteFull(post.createdAt)}>
@@ -51,18 +56,20 @@ export function PostCard({ post, className }: { post: Post; className?: string }
           upvotes={post.upvotes}
           downvotes={post.downvotes}
           userVote={post.userVote}
+          scoreVariant="signed"
           onVote={(direction) =>
             voteMutation.mutate({ id: post.id, assetTicker: post.assetTicker, direction })
           }
         />
         <Link
           href={`${href}#comentarios`}
-          onClick={markCameFromFeed}
+          scroll={false}
+          onClick={() => markCameFromFeed(href)}
           className="relative z-10 flex min-h-11 items-center rounded px-2 text-sm text-muted-foreground hover:text-foreground"
         >
           {post.commentCount} comentarios
         </Link>
       </div>
-    </article>
+    </SquircleSurface>
   )
 }

@@ -10,6 +10,21 @@ const LABELS: Record<Conviction, string> = {
   EXTREME: "Extrema",
 }
 
+/**
+ * D15: escala de 4 colores, de rojo a verde — uno por nivel de convicción, pedido explícito del
+ * usuario para diferenciarlos de un vistazo (antes todos los niveles usaban el mismo color
+ * neutro, solo cambiaba cuántas barras estaban llenas). Único lugar de la UI con una escala de 4
+ * colores: el resto de la app sigue la regla de D8 (un acento + verde/rojo reservados a
+ * resultado/voto) — acá no hay ambigüedad posible con esa regla porque la convicción no es un
+ * resultado ni un voto, es un dato propio de la tesis.
+ */
+const LEVEL_COLOR_CLASS: Record<Conviction, string> = {
+  LOW: "bg-negative",
+  MEDIUM: "bg-[#f59e0b]",
+  HIGH: "bg-[#84cc16]",
+  EXTREME: "bg-positive",
+}
+
 export function ConvictionMeter({
   conviction,
   className,
@@ -25,16 +40,11 @@ export function ConvictionMeter({
         {LEVELS.map((level, i) => (
           <span
             key={level}
-            className={cn(
-              "h-1.5 w-4 rounded-full",
-              i <= activeIndex ? "bg-foreground" : "bg-muted"
-            )}
+            className={cn("h-1.5 w-4 rounded-full", i <= activeIndex ? LEVEL_COLOR_CLASS[level] : "bg-muted")}
           />
         ))}
       </div>
-      <span className="text-sm text-muted-foreground">
-        Convicción {LABELS[conviction]}
-      </span>
+      <span className="text-sm text-muted-foreground">{LABELS[conviction]}</span>
     </div>
   )
 }

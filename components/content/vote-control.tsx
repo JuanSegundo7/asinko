@@ -15,6 +15,8 @@ type VoteControlProps = {
   disabled?: boolean
   disabledReason?: string
   size?: "default" | "compact"
+  /** D6/D14: "neutral" (default) en todo lo que tenga un resultado con el que el color pueda contradecirse (tesis); "signed" en posteos/comentarios, donde no hay ese riesgo. Ver components/content/score.tsx. */
+  scoreVariant?: "neutral" | "signed"
   className?: string
 }
 
@@ -26,6 +28,7 @@ export function VoteControl({
   disabled = false,
   disabledReason = "Votación cerrada",
   size = "default",
+  scoreVariant = "neutral",
   className,
 }: VoteControlProps) {
   const iconSize = size === "compact" ? 16 : 20
@@ -34,25 +37,28 @@ export function VoteControl({
     <div
       role="group"
       aria-label={voteAriaLabel(upvotes, downvotes)}
-      className={cn("inline-flex items-center gap-0.5", className)}
+      className={cn("inline-flex items-center gap-1.5", className)}
     >
-      <VoteButton
-        direction="UP"
-        active={userVote === "UP"}
-        count={upvotes}
-        disabled={disabled}
-        iconSize={iconSize}
-        onClick={() => onVote("UP")}
-      />
-      <VoteButton
-        direction="DOWN"
-        active={userVote === "DOWN"}
-        count={downvotes}
-        disabled={disabled}
-        iconSize={iconSize}
-        onClick={() => onVote("DOWN")}
-      />
-      <Score upvotes={upvotes} downvotes={downvotes} className="ml-1.5 text-sm" />
+      <div className="inline-flex items-center overflow-hidden rounded-full border border-border bg-muted">
+        <VoteButton
+          direction="UP"
+          active={userVote === "UP"}
+          count={upvotes}
+          disabled={disabled}
+          iconSize={iconSize}
+          onClick={() => onVote("UP")}
+        />
+        <span aria-hidden="true" className="h-5 w-px shrink-0 bg-border" />
+        <VoteButton
+          direction="DOWN"
+          active={userVote === "DOWN"}
+          count={downvotes}
+          disabled={disabled}
+          iconSize={iconSize}
+          onClick={() => onVote("DOWN")}
+        />
+      </div>
+      <Score upvotes={upvotes} downvotes={downvotes} variant={scoreVariant} />
     </div>
   )
 
@@ -83,10 +89,7 @@ function VoteButton({
 }) {
   const Icon = direction === "UP" ? ArrowBigUp : ArrowBigDown
   const label = direction === "UP" ? "Votar a favor" : "Votar en contra"
-  const activeColor =
-    direction === "UP"
-      ? "text-emerald-600 dark:text-emerald-400"
-      : "text-red-600 dark:text-red-400"
+  const activeClasses = direction === "UP" ? "bg-positive/10 text-positive" : "bg-negative/10 text-negative"
 
   return (
     <button
@@ -102,10 +105,11 @@ function VoteButton({
         onClick()
       }}
       className={cn(
-        "relative z-10 flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-md text-sm text-muted-foreground transition-colors",
-        !disabled && "press-feedback hover:bg-accent hover:text-accent-foreground",
+        "relative z-10 flex min-h-11 min-w-11 items-center justify-center gap-1 px-2 text-sm text-muted-foreground transition-colors",
+        !disabled && !active && "press-feedback hover:bg-accent hover:text-accent-foreground",
+        !disabled && active && "press-feedback",
         disabled && "cursor-not-allowed opacity-50",
-        active && activeColor
+        active && activeClasses
       )}
     >
       <Icon size={iconSize} fill={active ? "currentColor" : "none"} aria-hidden="true" />
