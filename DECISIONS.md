@@ -10,6 +10,8 @@ Por qué se implementó cada cosa como se implementó. Sigue la numeración del 
 
 El freeze de una tesis cerrada se aplica en **dos capas**, no solo visualmente: `voteContent` en `lib/api.ts` rechaza el voto si `status === "CLOSED"` (para que no alcance con inspeccionar el DOM y togglear un botón deshabilitado), y `VoteControl` recibe `disabled` + `disabledReason="Votación cerrada"` que se muestra en un tooltip. `ConsensusVsOutcome` (`components/content/consensus-vs-outcome.tsx`) muestra consenso y resultado como dos filas siempre visibles en una tesis cerrada, y deriva el badge "Acertó/Falló contra el consenso" (`lib/consensus.ts`) únicamente cuando divergen — si coinciden no se agrega ruido.
 
+**Revisado (D25):** ese bloque se sacó de la **card** (feed y listado de tesis) a pedido del usuario — sigue mostrándose, sin cambios, solo en el detalle completo. En la card, con el badge de estado ya visible y el precio de cierre en la grilla, era demasiada información repetida para una vista compacta.
+
 ## D2 — Vista de detalle
 
 Implementado con **parallel + intercepting routes** de Next.js, como pide la versión revisada del CLAUDE.md.
@@ -40,6 +42,8 @@ El contenido del detalle vive en un único componente compartido por página com
 `BackLink` (`components/back-link.tsx`) resuelve el otro matiz: `router.back()` solo funciona si hay historial propio de la sesión — si alguien entra directo por URL no hay adónde "volver". Por eso cada card marca `sessionStorage["asinko:cameFromFeed"]` antes de navegar, y `BackLink` decide en base a eso: `router.back()` si vino del feed, un `<Link>` plano a `/assets/[ticker]` si no.
 
 Mobile/tablet (por debajo de `xl`): el mismo `DetailPanel` a pantalla completa cumple la doble función de "panel interceptado" y "página completa" — con "← NVDA" arriba (`BackLink`, visible en ese rango) y barra sticky abajo (`components/detail/mobile-action-bar.tsx`, voto + acceso a comentar) con `padding-bottom: env(safe-area-inset-bottom)`. El header del activo, la franja de tesis y la tab bar se ocultan en una ruta de detalle por debajo de `xl` (`lib/routes.ts#isDetailRoute`) porque el detalle ya ocupa toda la pantalla.
+
+**Revisado (D15):** el usuario pidió acotar el drawer lateral a un solo caso de uso — se aborda en detalle en D15 más abajo, incluyendo un bug de Next.js todavía sin resolver en ese caso puntual.
 
 ## D3 — Comentarios
 
@@ -141,7 +145,9 @@ Tres correcciones puntuales a D10, a pedido explícito tras ver la primera versi
 
 **Estados vacíos.** Comentarios: "Todavía no hay comentarios. Sé el primero." Ruta con id/ticker inexistente: `NotFoundPanel` con mensaje + `BackLink` a NVDA (no se usa `notFound()` de Next.js porque estas páginas son Client Components que resuelven el dato vía TanStack Query después del mount — `notFound()` está documentado para Server Components/Route Handlers, no para ese caso). Tesis filtradas sin resultados: mensaje contextual ("No hay tesis cerradas para este activo").
 
-**Sistema visual.** Se evitó el look genérico de dashboard shadcn manteniendo la paleta neutra que pide la consigna (el color se reserva para voto activo y resultado de tesis) pero construyendo identidad vía **tipografía**, no color: los posteos (opinión casual) usan la sans por defecto; el *claim* de una tesis (predicción formal, verificable) usa una serif editorial (`Source Serif 4`) que la hace leer como un titular, no como un post más. Todo dato financiero — ticker, precios, scores, fechas de la grilla — usa monoespaciada (`Geist Mono`), separando visualmente "dato" de "prosea". Motion: feedback de presión (`scale(0.97)`, solo `transform`, curva `cubic-bezier(0.23,1,0.32,1)`, <300ms) en botones y controles de voto; entrada escalonada (stagger, 60ms entre cards) al montar el feed la primera vez; todo respeta `prefers-reduced-motion`.
+**Sistema visual.** Se evitó el look genérico de dashboard shadcn manteniendo la paleta neutra que pide la consigna (el color se reserva para voto activo y resultado de tesis) pero construyendo identidad vía **tipografía**, no color: todo dato financiero — ticker, precios, scores, fechas de la grilla — usa monoespaciada (`Geist Mono`), separando visualmente "dato" de "prosa". Motion: feedback de presión (`scale(0.97)`, solo `transform`, curva `cubic-bezier(0.23,1,0.32,1)`, <300ms) en botones y controles de voto; entrada escalonada (stagger, 60ms entre cards) al montar el feed la primera vez; todo respeta `prefers-reduced-motion`.
+
+**Revisado (D24):** el *claim* de una tesis usaba originalmente una serif editorial (`Source Serif 4`) para leer como un titular. Se sacó por pedido explícito del usuario tras varias rondas de feedback visual — el criterio final fue "que tenga la misma tipografía que el resto de la app". El único lugar que conserva la serif hoy es el **nombre del activo** en `AssetHeader` (ej. "NVIDIA Corp."), no el claim. Ver D24 más abajo para el detalle de las rondas de feedback que llevaron a esto.
 
 **Mobile/táctil.** Objetivos de 44×44px en todos los controles interactivos (incluidos los de voto dentro de las cards), `env(safe-area-inset-bottom)` en la barra sticky, y el gesto de back nativo del navegador funciona porque el detalle usa `router.back()` real (no una navegación simulada) cuando corresponde.
 
@@ -159,6 +165,100 @@ El usuario pidió que el total del score (`+116`) fuera más chico y coloreado s
 
 `components/content/score.tsx` ahora acepta `variant: "neutral" | "signed"` (default `"neutral"`, sin cambios de comportamiento salvo que ahora es explícito); `"signed"` es más chico (`text-xs` vs `text-sm`) y usa `text-positive`/`text-negative`/`text-muted-foreground` según el signo del neto. `VoteControl` expone `scoreVariant` y lo pasa a `Score`; `PostCard`, `PostDetail` (inline + `MobileActionBar`) y `CommentItem` pasan `"signed"`. `ThesisCard` y `ThesisDetail` no pasan nada — siguen en `"neutral"` por default, D6 intacto ahí.
 
+## D15 — Panel lateral acotado solo al listado de tesis (revisa D2)
+
+D2 abría el drawer lateral desde **cualquier** click en una card de posteo o tesis, en feed o en cualquier otro lugar. El usuario pidió acotarlo: el drawer lateral queda reservado **exclusivamente** para "Ver todas las tesis" (`/assets/[ticker]/theses`) — desde ahí, click en una tesis abre el panel. Cualquier otro origen (feed, `ThesisTracker` de la columna derecha) navega directo a la página completa de detalle, sin intercepción.
+
+Motivo del usuario: la especificación pide "el detalle" de posteos y tesis, sin más — el panel lateral es un extra de UX que solo tiene sentido cuando ya se está navegando una lista dedicada de tesis (no se pierde el contexto de "en qué tesis estaba"), no cuando se viene del feed general.
+
+**Implementación**: se sacó `@panel` de `app/assets/[ticker]/layout.tsx` (que se eliminó — ya no hace falta ningún layout con slot ahí) y se movió a un layout nuevo, específico de la lista: `app/assets/[ticker]/theses/layout.tsx`, con su propio `@panel/(.)[id]/page.tsx` (intercepta `theses/[id]` solo cuando la navegación arranca desde `theses/`) y `@panel/default.tsx`. Se aplicó el mismo guard `trustPanelSlot` que ya existía en el layout viejo (D2) — verifica contra `sessionStorage` que la navegación intencionalmente vino de una card de esa lista, para blindarse del mismo bug de Next 16.3.4 de D2 (el slot resuelve la ruta interceptada incluso en una entrada directa). El folder `app/assets/[ticker]/@panel/` completo (la intercepción vieja para posts/theses desde cualquier lado) se borró — los posteos y tesis clickeados desde el feed ahora **siempre** van a su página completa, sin excepción.
+
+**Bug abierto, sin resolver:** verificado repetidas veces con Playwright (`PANEL_FOUND: 0` en cada corrida) — la intercepción desde el listado de tesis **no dispara**. La estructura de carpetas es la que Next.js documenta para este patrón (`@panel/(.)[id]/page.tsx` bajo el mismo segmento que el click de origen) y se confirmó carpeta por carpeta contra la documentación oficial, pero el panel nunca abre; el click navega directo a la página completa, como si no hubiera slot interceptado en absoluto. No se encontró la causa raíz pese a varios intentos — queda documentado como pendiente real, no oculto: hoy el listado de tesis se comporta igual que el resto de la app (siempre página completa), aunque la intención original era que abriera un drawer ahí. Funcionalmente no es un bug visible para el usuario final (la navegación funciona, solo no como panel), pero conviene revisarlo si se retoma este mockup.
+
+## D16 — Fix de estiramiento en avatares de comentario
+
+Bug reportado: las imágenes de avatar en la lista de comentarios se veían "estiradas/deformadas" en algunos casos. Causa raíz: el preflight de Tailwind (`img { height: auto }`) combinado con `align-items: stretch` (default de flex) en el contenedor del comentario — el `<Image>` de avatar terminaba con un `width` fijo pero una altura que el flex container decidía por su cuenta, deformando la imagen. El fallback (círculo con inicial, para `@demo`) tenía el mismo problema de raíz pero en el div, no en una imagen, así que se notaba menos pero también medía mal.
+
+Fix en `components/shell/user-avatar.tsx`: se agregó `style={{ width: size, height: size }}` inline tanto al `<Image>` real como al div de fallback — un `style` inline gana por especificidad sobre el preflight de Tailwind sin necesitar `!important` ni tocar la config global de preflight (que rompería otras imágenes de la app a propósito diseñadas para escalar con `height: auto`).
+
+## D17 — Layout de detalle más ancho, comentarios con más vida e hilos de un nivel
+
+Pedido del usuario tras ver el detalle: "más vida" en comentarios y que puedan tener respuestas. Tres cambios relacionados:
+
+**Ancho**: se agrandó el layout del detalle (posteo y tesis) — más espacio de lectura para razonamiento + grilla + comentarios en simultáneo, sin sentirse apretado.
+
+**Hilos de un nivel**: `Comment` (`lib/types.ts`) ganó `parentId: string | null`. Se preguntó explícitamente al usuario cuántos niveles de anidamiento admitir — eligió **un solo nivel** (recomendado): una respuesta no puede tener a su vez respuestas propias. Esto evita el problema clásico de hilos infinitos en mobile (indentación que se come todo el ancho disponible) sin sacrificar la funcionalidad real de "responder a un comentario puntual". `lib/api.ts#getComments` pagina solo comentarios de **primer nivel**, con las respuestas embebidas dentro de cada uno (`reply.parentId === comment.id`); `addComment` acepta `parentId` opcional. `components/comments/comment-item.tsx` tiene un componente `ReplyItem` hermano para el nivel anidado, visualmente más chico y con indentación, sin recursar sobre sí mismo (no hay estructura de datos que lo permita).
+
+**Más vida**: entrada escalonada (stagger) al montar la lista de comentarios, mismo criterio que el feed (D10). Nada de spring en la lista en sí — no hay gesto que amerite eso (§4 del skill `animate`), es contenido leyéndose, no algo que el usuario arrastra.
+
+## D18 — Squircle: sombra cuadrada asomando por las esquinas (bug app-wide)
+
+Bug visual reportado: en varias cards se veía un borde/sombra recto asomando por detrás de la esquina curva del squircle — "como si el bg de la card fuera más chico que la tarjeta en sí". Causa raíz: `SquircleSurface` (D10/D11) recortaba con `clip-path` las dos capas internas (borde + contenido) pero el elemento **exterior**, que es el que dibuja el `box-shadow`, no tenía ningún `border-radius` — su caja de layout seguía siendo un rectángulo recto, así que la sombra (y en algunos casos el propio elemento, si el clip-path interno no llegaba exactamente al borde) se proyectaba con esquinas cuadradas por detrás de la curva visible.
+
+Fix: se agregó `style={{ borderRadius: cornerRadius }}` al elemento exterior — no reemplaza el `clip-path` (que sigue siendo necesario para la curva *continua* real, D10), es un respaldo para que la caja que proyecta la sombra tenga, como mínimo, esquinas redondeadas convencionales que coincidan visualmente con el clip-path interno. Como el bug era del wrapper compartido `SquircleSurface`, el fix corrige **todas** las cards de la app de una sola vez (feed, columna derecha, drawer, header del activo) — no fue necesario tocar cada call site. De paso se agregó el mismo `border-radius` de respaldo a las dos capas internas (evita un frame de esquina cuadrada — "flash" — antes de que el `ResizeObserver` complete la primera medición del clip-path real).
+
+También se pidió, en la misma ronda, más contraste en la sombra ("más iOS") — se subió la opacidad/tamaño de `--shadow-elevation-1/2/3` en `app/globals.css`.
+
+## D19 — Drawer de "Top contributors": tres bugs de raíz distinta en secuencia
+
+El drawer de detalle (`DetailPanel`) reutilizado para "Top contributors" (ver más allá del top 3 compacto) pasó por tres bugs encadenados, cada uno con causa raíz genuinamente distinta — documentados en orden porque cada fix expuso el siguiente problema:
+
+1. **No abría.** `DetailPanel` vivía como hijo de `SquircleSurface` dentro del widget. `clip-path` en un ancestro convierte a ese ancestro en el *containing block* de cualquier descendiente `position: fixed` — el drawer, en vez de cubrir la pantalla, quedaba recortado y atrapado dentro de la card chica del widget. Fix: mover `DetailPanel` a ser un hermano de `SquircleSurface` (Fragment), no un hijo — documentado con un comentario en `top-contributors.tsx` explicando por qué, para que no se reintroduzca por accidente.
+
+2. **Abría pero no cerraba.** Con el fix anterior, el drawer ya cubría la pantalla — pero el botón "✕"/`Esc` dejaba de responder. Causa: un ancestro más arriba (`PanelWidgets`, la columna derecha) es `position: sticky`, y `sticky` también crea un nuevo *stacking context* — el `z-50` del drawer quedaba atrapado **debajo** del `z-40` del header de la app, en vez de por encima como se esperaba, así que los clicks en la "✕" en realidad caían sobre el header invisible detrás. Fix: `DetailPanel` ahora se monta vía `createPortal(..., document.body)` — al vivir literalmente fuera del árbol DOM de `PanelWidgets`, ningún ancestro con `sticky`/`clip-path` puede volver a atraparlo. Se agregó un guard `mounted` (`useState(false)` + `useEffect`) porque `document.body` no existe en el render del servidor.
+
+3. **Las esquinas del squircle se rompieron.** Con el portal ya andando, el drawer volvió a mostrar esquinas cuadradas (el bug de D18, pero por una causa nueva y más sutil): `lib/use-squircle.ts` medía el elemento con un `useRef` tradicional. Antes del fix del portal, el nodo montaba y desmontaba en el mismo lugar del árbol; con el portal, el nodo pasó a montarse tarde (después del guard `mounted`) — el `useRef` nunca disparaba una remedición porque su `useLayoutEffect` dependía de `[cornerRadius, cornerSmoothing]` (que no cambian) y no de si el ref ya apuntaba a un nodo real. Fix: se reescribió el hook para usar un **callback ref guardado en estado** (`useState<HTMLDivElement | null>` en vez de `useRef`) — así el nodo real, cuando por fin existe, entra al estado de React y dispara el efecto de medición de forma confiable, sin importar cuándo monta.
+
+## D20 — Traducción de todo el contenido de cara al usuario a inglés
+
+Pedido del usuario: pasar todo el contenido visible (seed de posteos/tesis/comentarios en `lib/mock-data.ts`, copy de UI) a inglés — código, comentarios de código, `CLAUDE.md` y este mismo `DECISIONS.md` se mantienen en español, porque son artefactos internos del proyecto, no contenido de cara al usuario. Se tradujeron los 5 posteos/tesis del seed, los 35 comentarios (incluidas las respuestas agregadas en D17) y las etiquetas/labels de UI (botones, badges, tooltips, estados vacíos). El sector del activo pasó de "Semiconductores" a "Semiconductors" en `lib/mock-data.ts`. Ningún dato numérico ni la estructura del seed cambiaron — es una traducción, no una reescritura de contenido.
+
+## D21 — Animaciones y smooth scroll en toda la app
+
+Se invocó el skill `animate` para auditar qué superficies estáticas de la app se beneficiaban de motion, más allá del drawer (único lugar con `motion`/Framer Motion hasta D10). Se agregó `app/assets/[ticker]/template.tsx` — a diferencia de un `layout.tsx`, un `template.tsx` se **remonta en cada navegación**, lo que permite una animación de entrada (`page-in`, keyframe CSS en `app/globals.css`) que se dispara de nuevo cada vez que se cambia de ruta dentro de `[ticker]`, no solo la primera vez que monta el layout. Se agregó `scroll-behavior: smooth` global, gateado explícitamente por `@media (prefers-reduced-motion: no-preference)` — con movimiento reducido, los saltos de ancla (franja de tesis → sección de tesis, deep-links a comentarios) siguen siendo instantáneos.
+
+**Gotcha encontrado**: `.press-feedback` (la clase de feedback de presión en botones, D10) dejó de responder a `transition-colors` de Tailwind en algunos botones nuevos. Causa: `.press-feedback` está definida en CSS plano fuera de cualquier `@layer` en `globals.css`, y CSS sin capa (unlayered) le gana en cascada a `@layer utilities` **sin importar el orden en el archivo** — su propio `transition` (shorthand, sin incluir `color`/`background-color`) pisaba silenciosamente la utility. Fix: se agregó `color`/`background-color` a la declaración `transition` propia de `.press-feedback`, y se sacaron las clases `transition-colors` ahora redundantes de los 3 call sites que las tenían.
+
+## D22 — Rediseño de header y sidebar con el skill `apple-design`, más el logo real
+
+Pedido explícito del usuario: usar el skill de diseño Apple disponible en el proyecto para mejorar sustancialmente header y sidebar. Cambios principales:
+
+- **`AppNav`** (`components/shell/app-nav.tsx`) pasó de fijo-colapsado-por-breakpoint a un **rail que se expande al hover** en cualquier ancho donde haya puntero fino (`(hover: hover) and (pointer: fine)`, para no disparar falsos hovers en touch): 72px de ancho en reposo, 256px al pasar el mouse, animado con un spring crítico (`bounce: 0, duration: 0.4`, criterio de "Move/reposition" del skill) vía `motion.nav`. El label de cada `NavItem` (`components/shell/nav-item.tsx`) revela con `max-width` + `opacity` en transición (nunca anima `width` directo sobre texto, que fuerza reflow constante) y el ítem activo lleva una barra de acento a la izquierda.
+- **`TopHeader`** (`components/shell/top-header.tsx`): el borde inferior sólido (`border-b`) se reemplazó por un `box-shadow` suave siguiendo el criterio de "scroll edge effect, no hard divider" del skill (§12).
+- **Logo real de Asinko**: el usuario proveyó el SVG real del logo (exportado por él mismo desde Wix, confirmado explícitamente antes de usarlo — el marcado traía cruft específico de Wix, `data-bbox` y un bloque `<style>` de scoping, que se limpiaron). Reemplazó el wordmark de texto+punto en `TopHeader`. Se pidió además que el logo fuera blanco — los fills originales (`#155de9`/`#145ce8`/`#145de9`) se cambiaron a `#FFFFFF`. Vive en `public/asinko-logo.svg`.
+
+## D23 — Rediseño de la página de listado de tesis
+
+El usuario notó que `/assets/[ticker]/theses` no compartía el sistema de diseño actual de la app (layout viejo de antes del rediseño de D9-D11). Se reescribió `app/assets/[ticker]/theses/page.tsx` adoptando el mismo shell de 3 columnas que ya usan las páginas de detalle, con un control de filtro segmentado real (`StatusFilter`/`SegmentButton`, reemplazando botones sueltos) en vez del filtro plano anterior, y `stagger-item` en la entrada de la lista (mismo criterio de D10/D17). El título de la sección se probó en serif en un primer intento y se revirtió a `text-xl font-semibold` sans — ver D24, es la misma corrección de tipografía que terminó aplicándose también al claim de la tesis.
+
+## D24 — Reversión de la serif: solo el nombre del activo la conserva
+
+Varias rondas de feedback sobre "títulos con tipografía distinta" en tesis y en la página de listado. El primer diagnóstico fue acotado mal — se interpretó como un problema de dos títulos puntuales (encabezado de sección + título de card) y se corrigieron esos dos, pero el usuario seguía viendo la inconsistencia ("¿por qué se ve así?"). La aclaración final y decisiva fue: **"la idea es que tenga la tipografía igual al resto de la app"** — es decir, el problema no eran dos títulos sueltos, era la regla de origen (D8: "el claim de la tesis usa una serif editorial") en sí misma.
+
+Se sacó `font-serif` del claim de la tesis en `components/content/thesis-card.tsx` y `components/content/thesis-detail.tsx` (ambos vuelven a `font-medium` sans, mismo peso visual que antes pero sin familia distinta) y de los títulos de sección. Se le preguntó al usuario específicamente qué alcance quería para la reversión (todo el sistema de tipografía por rol vs. solo el claim) y confirmó el más acotado: **solo el claim de la tesis** deja de llevar serif. El nombre del activo en `AssetHeader` (ej. "NVIDIA Corp.") es, a partir de esta decisión, el **único** lugar de toda la app que conserva la fuente serif — D8 queda revisado en ese punto puntual, el resto de la regla de tipografía por rol (sans para UI, mono solo para números) no cambió.
+
+## D25 — Reordenamiento de contenido en las cards y salida de `ConsensusVsOutcome` de la card
+
+Dos ajustes de orden visual en `components/content/thesis-card.tsx` y `components/content/post-card.tsx`, a partir de una captura de referencia que el usuario compartió:
+
+- **Votos antes que preview de comentarios**: el footer de voto/score, que antes aparecía después del bloque de comentarios de preview, pasó a mostrarse primero — coincide con el layout de referencia y prioriza visualmente el dato de "qué opinó la comunidad" antes que "qué dijeron en particular".
+- **`ConsensusVsOutcome` fuera de la card**: el usuario marcó explícitamente que ese bloque (consenso vs. resultado, D1) no debería estar en la vista de card de una tesis cerrada. Se preguntó el alcance y confirmó: sacarlo de la card, mantenerlo solo en el detalle completo — la nota completa de esta revisión vive en D1 más arriba, junto a la decisión original.
+- De paso, los headers de `ThesisCard`/`PostCard`/`CommentItem` pasaron de "autor · tiempo" con separador "·" a `justify-between` (autor a la izquierda, tiempo a la derecha, sin separador) — mismo pedido, aplicado de forma consistente a las tres superficies tras confirmarlo explícitamente para comentarios también.
+
+## D26 — Fix: el comentario nuevo saltaba de posición después de publicarse
+
+Bug reportado: al comentar en una tesis o posteo, el comentario nuevo aparecía en su lugar (arriba, optimistic, D3) por un instante y después "saltaba" al final de la lista. Causa raíz: `onSettled` de `useAddCommentMutation` (`lib/queries.ts`) invalidaba la query de comentarios — el refetch subsiguiente reordenaba la lista completa por el sort activo ("Más votados" por default), y un comentario nuevo con 0 votos cae al final bajo ese criterio. La UX D3 ya asumía esta tensión ("es una concesión de UX... se reconcilia solo en el próximo `invalidateQueries`") pero en la práctica el salto se sentía como un bug, no como una reconciliación aceptable.
+
+Fix: se sacó la invalidación de la query de comentarios del `onSettled` (se mantienen las de post/tesis/`content`, que sí necesitan refrescarse — cambia el `commentCount`). En su lugar, `onSuccess` parchea el caché de comentarios **in-place**: busca el comentario optimista por su id temporal (guardado en el contexto de `onMutate` como `optimisticId`) y lo reemplaza por el real recibido del servidor, en la posición exacta donde ya estaba — tanto para comentarios de primer nivel como para respuestas anidadas (D17). El comentario nuevo ya no se reordena hasta el próximo sort/reload real, que es el comportamiento esperado.
+
+## D27 — Top contributors: fila pinneada para "acertó contra el consenso" + desglose posts/tesis
+
+Dos mejoras al widget de contribuidores (D9), ambas trabajadas en Plan Mode con el usuario antes de implementar.
+
+**Fila pinneada.** El widget compacto (top 3 por score agregado) puede dejar afuera a quien tiene la historia más importante del producto: alguien con una tesis cerrada y acertada, pero cuyo score neto es negativo porque la comunidad votó en contra (exactamente el caso de @shortandlong en el seed, D9). Sin esto, esa historia solo era visible abriendo el drawer completo — lo opuesto de lo que el producto quiere destacar (ver "Idea central del producto" en `CLAUDE.md`). Se le preguntó al usuario el alcance exacto entre varias opciones y confirmó la más acotada: **garantizar que el que acertó se vea siempre**, sin tocar el ranking por score en sí. `TopContributors` (`components/asset/top-contributors.tsx`) calcula `pinned` como los contribuidores con `hasCorrectThesis === true` que no ya están en el top 3 compacto, y los renderiza en una sección separada (`border-t`) debajo, con su `metaLabel` mostrando el badge de mismatch (`getConsensusMismatchLabel`) en vez del desglose normal de piezas.
+
+**Desglose posts/tesis.** El texto `"{N} piece(s)"` combinaba posts y tesis sin decir qué escribió cada contribuidor. Se preguntó el alcance (desglose simple vs. sumar comentarios al conteo vs. meter comentarios al ranking) y el usuario confirmó el más chico: **solo desglosar posts vs. tesis**, sin tocar el ranking ni sumar comentarios. `Contributor` (`lib/community.ts`) reemplazó `pieceCount: number` por `postCount`/`thesisCount`, incrementados según `piece.type` al iterar. `formatPieceBreakdown` (`components/asset/top-contributors.tsx`) arma el texto natural con el plural irregular de "thesis"/"theses" resuelto a mano (sin librería de i18n para un solo caso) — ej. "1 post", "2 theses", "1 post, 1 thesis". La fila pinneada de arriba sigue mostrando su `metaLabel` explícito ("Right against consensus"), que pisa este default sin conflicto.
+
 ---
 
 ## Verificación manual hecha
@@ -171,3 +271,8 @@ Específico de D2 (panel drawer), en los tres anchos de D4:
 - **Tablet (900px)**: click en tesis → el panel toma toda la pantalla (nav lateral y tab bar quedan ocultos), back nativo cierra.
 - **Mobile (390px)**: se scrollea el feed 600px, se abre un posteo, se confirma la barra sticky de voto/comentar, se cierra con back nativo y se confirma que el feed vuelve exactamente a los mismos 600px de scroll.
 - **Entrada directa** a `/assets/nvda/theses/t2` (hard reload, sin pasar por el feed) en desktop: se confirmó que se ve la página completa sola, sin ningún drawer fantasma superpuesto — este es el caso que expuso el bug de Next descripto en D2, reproducido y corregido antes de esta verificación.
+
+**Limitaciones de testing conocidas, no resueltas:**
+
+- El drawer del listado de tesis (D15) no dispara — confirmado repetidamente con Playwright, causa raíz no encontrada. Documentado como pendiente real, no oculto.
+- `env(safe-area-inset-bottom)` no se puede verificar con Playwright/Chromium: el emulador de dispositivo mobile siempre reporta el inset en 0, así que el comportamiento real en un iPhone con home indicator no se pudo confirmar visualmente en esta sesión — se implementó siguiendo la especificación (D2), pero queda pendiente una verificación en un dispositivo real.
