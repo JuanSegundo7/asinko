@@ -23,7 +23,8 @@ export function getCommunityConsensus(posts: Post[], theses: Thesis[]): Communit
 export type Contributor = {
   handle: string
   score: number
-  pieceCount: number
+  postCount: number
+  thesisCount: number
   hasCorrectThesis: boolean
 }
 
@@ -38,9 +39,11 @@ export function getTopContributors(posts: Post[], theses: Thesis[], limit = 3): 
 
   for (const piece of [...posts, ...theses]) {
     const handle = piece.author.handle
-    const entry = byHandle.get(handle) ?? { handle, score: 0, pieceCount: 0, hasCorrectThesis: false }
+    const entry =
+      byHandle.get(handle) ?? { handle, score: 0, postCount: 0, thesisCount: 0, hasCorrectThesis: false }
     entry.score += piece.upvotes - piece.downvotes
-    entry.pieceCount += 1
+    if (piece.type === "POST") entry.postCount += 1
+    else entry.thesisCount += 1
     byHandle.set(handle, entry)
   }
 
