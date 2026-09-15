@@ -25,16 +25,41 @@ export function useSquircle(cornerRadius: number, cornerSmoothing = 0.6) {
   useLayoutEffect(() => {
     if (!el) return
 
-    const update = () => {
-      const { width, height } = el.getBoundingClientRect()
+    // El tamaño se toma del propio ResizeObserver (`entry`), NO de un `getBoundingClientRect()`
+    // dentro del callback. Motivo: el elemento clippeado es `h-full` de su padre y su altura la
+    // define el contenido — leer `getBoundingClientRect()` acá puede devolver el tamaño de un
+    // frame anterior (antes de que el layout del nuevo contenido se asiente), dejando el clip-path
+    // calculado para un tamaño viejo. El resultado observado en mobile: un clip mucho más ancho o
+    // alto que la card real (el clip quedó "pegado" a una medición previa), cortando el contenido
+    // por dentro del fondo. `entry.contentRect`/`borderBoxSize` es el tamaño real de ESTE resize.
+    const apply = (width: number, height: number) => {
       if (!width || !height) return
-      const path = getSvgPath({ width, height, cornerRadius, cornerSmoothing })
-      setClipPath(`path('${path}')`)
+      const value = `path('${getSvgPath({ width, height, cornerRadius, cornerSmoothing })}')`
+      // Se escribe imperativamente (aplica en el mismo frame que el resize, antes del paint —
+      // sin el desfase de un render de React) y además al estado (para que sobreviva a un
+      // re-render que reescribiría el `style` inline desde las props del componente).
+      el.style.clipPath = value
+      setClipPath(value)
     }
 
-    update()
-    const ro = new ResizeObserver(update)
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[entries.length - 1]
+      const box = entry.borderBoxSize?.[0]
+      if (box) {
+        apply(box.inlineSize, box.blockSize)
+      } else {
+        const r = entry.contentRect
+        apply(r.width, r.height)
+      }
+    })
     ro.observe(el)
+
+    // Medición inicial sincrónica (el primer callback del RO llega un tick después; sin esto habría
+    // un frame sin clip). Acá sí `getBoundingClientRect` es correcto: es el tamaño ya asentado del
+    // montaje inicial, no un resize en vuelo.
+    const rect = el.getBoundingClientRect()
+    apply(rect.width, rect.height)
+
     return () => ro.disconnect()
   }, [el, cornerRadius, cornerSmoothing])
 

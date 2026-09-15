@@ -23,18 +23,26 @@ function PostCardSkeleton() {
         <Skeleton className="h-3.5 w-10" />
       </header>
 
+      {/* 3 líneas: promedio razonable del cuerpo real (los posteos del seed van de ~3 a ~4 líneas).
+          No calza al pixel con texto variable — un shift chico de altura al cargar es inevitable y
+          aceptable; lo que NO puede pasar es que ese cambio de tamaño rompa la esquina del squircle
+          (se recorta el fondo), y eso se resuelve en use-squircle.ts (clip-path imperativo aplicado
+          en el mismo frame que el resize), no acá. */}
       <div className="mt-2 flex flex-col gap-2">
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-2/3" />
       </div>
 
-      <CommentPreviewSkeleton />
-
+      {/* Mismo orden que la card real tras D25: footer de voto/score ANTES del preview de
+          comentarios. El skeleton lo tenía invertido, así que al cargar los bloques se reordenaban
+          (reflujo interno visible además del cambio de altura). */}
       <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
         <VoteControlSkeleton />
         <Skeleton className="h-4 w-24" />
       </div>
+
+      <CommentPreviewSkeleton />
     </SquircleSurface>
   )
 }
@@ -66,12 +74,13 @@ function ThesisCardSkeleton() {
         <Skeleton className="h-4 w-1/2" />
       </div>
 
-      <CommentPreviewSkeleton />
-
+      {/* Mismo orden que ThesisCard tras D25: footer de voto/score antes del preview de comentarios. */}
       <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
         <VoteControlSkeleton />
         <Skeleton className="h-4 w-24" />
       </div>
+
+      <CommentPreviewSkeleton />
     </SquircleSurface>
   )
 }
