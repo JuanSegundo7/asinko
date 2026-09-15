@@ -21,13 +21,13 @@ export function CommunityConsensus({ posts, theses }: { posts: Post[]; theses: T
 
   return (
     <SquircleSurface cornerRadius={20} elevation={1} className="p-4">
-      <h2 className="text-sm font-medium text-muted-foreground">Consenso de la comunidad</h2>
+      <h2 className="text-sm font-medium text-muted-foreground">Community consensus</h2>
       <div className="mt-3 flex items-center gap-4">
         <svg
           viewBox="0 0 64 64"
           className="size-16 shrink-0 -rotate-90"
           role="img"
-          aria-label={`${forPct}% de los votos a favor, ${100 - forPct}% en contra, sobre ${upvotes + downvotes} votos totales`}
+          aria-label={`${forPct}% of votes for, ${100 - forPct}% against, out of ${upvotes + downvotes} total votes`}
         >
           <circle cx="32" cy="32" r={RADIUS} fill="none" strokeWidth="8" className="stroke-border" />
           <circle
@@ -45,11 +45,11 @@ export function CommunityConsensus({ posts, theses }: { posts: Post[]; theses: T
           <span className="font-mono text-xl font-semibold tabular-nums text-foreground">{forPct}%</span>
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <span className="size-2 rounded-full bg-primary" aria-hidden="true" />
-            A favor · <span className="font-mono tabular-nums">{upvotes}</span>
+            For · <span className="font-mono tabular-nums">{upvotes}</span>
           </span>
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <span className="size-2 rounded-full bg-border" aria-hidden="true" />
-            En contra · <span className="font-mono tabular-nums">{downvotes}</span>
+            Against · <span className="font-mono tabular-nums">{downvotes}</span>
           </span>
         </div>
       </div>

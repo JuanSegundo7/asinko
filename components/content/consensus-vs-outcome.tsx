@@ -13,15 +13,15 @@ export function ConsensusVsOutcome({ thesis }: { thesis: Thesis }) {
   return (
     <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3 text-sm">
       <Row
-        label="Consenso de la comunidad"
-        value={consensus === "FOR" ? "A favor" : "En contra"}
+        label="Community consensus"
+        value={consensus === "FOR" ? "For" : "Against"}
       />
       <Row
-        label="Resultado"
-        value={`${outcomeIsCorrect ? "Acertó" : "Falló"} — cerró en ${formatCurrency(
+        label="Outcome"
+        value={`${outcomeIsCorrect ? "Correct" : "Incorrect"} — closed at ${formatCurrency(
           thesis.resolutionPrice ?? 0,
           "USD"
-        )} el ${formatAbsolute(thesis.resolvedAt)}`}
+        )} on ${formatAbsolute(thesis.resolvedAt)}`}
       />
       {mismatchLabel && (
         <p className="border-t border-border pt-2 font-medium text-foreground">{mismatchLabel}</p>

@@ -21,13 +21,13 @@ const sourceSerif = Source_Serif_4({
 
 export const metadata: Metadata = {
   title: "Asinko — NVDA",
-  description: "Research y tesis de la comunidad sobre NVIDIA Corp.",
+  description: "Community research and theses on NVIDIA Corp.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="es"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

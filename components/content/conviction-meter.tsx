@@ -4,10 +4,10 @@ import type { Conviction } from "@/lib/types"
 const LEVELS: Conviction[] = ["LOW", "MEDIUM", "HIGH", "EXTREME"]
 
 const LABELS: Record<Conviction, string> = {
-  LOW: "Baja",
-  MEDIUM: "Media",
-  HIGH: "Alta",
-  EXTREME: "Extrema",
+  LOW: "Low",
+  MEDIUM: "Medium",
+  HIGH: "High",
+  EXTREME: "Extreme",
 }
 
 /**

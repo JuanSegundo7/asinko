@@ -3,6 +3,7 @@
 import { ArrowBigDown, ArrowBigUp } from "lucide-react"
 import { cn } from "cn"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Score } from "./score"
 import { voteAriaLabel } from "@/lib/format"
 import type { UserVote, VoteDirection } from "@/lib/types"
@@ -26,7 +27,7 @@ export function VoteControl({
   userVote,
   onVote,
   disabled = false,
-  disabledReason = "Votación cerrada",
+  disabledReason = "Voting closed",
   size = "default",
   scoreVariant = "neutral",
   className,
@@ -88,7 +89,7 @@ function VoteButton({
   onClick: () => void
 }) {
   const Icon = direction === "UP" ? ArrowBigUp : ArrowBigDown
-  const label = direction === "UP" ? "Votar a favor" : "Votar en contra"
+  const label = direction === "UP" ? "Upvote" : "Downvote"
   const activeClasses = direction === "UP" ? "bg-positive/10 text-positive" : "bg-negative/10 text-negative"
 
   return (
@@ -117,5 +118,15 @@ function VoteButton({
         {count}
       </span>
     </button>
+  )
+}
+
+/** Píldora de `VoteControl` (control segmentado ▲|▼ + score al lado), para skeletons de cards/detalle/comentarios. */
+export function VoteControlSkeleton({ size = "default" }: { size?: "default" | "compact" }) {
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      <Skeleton className={size === "compact" ? "h-7 w-16 rounded-full" : "h-9 w-24 rounded-full"} />
+      <Skeleton className="h-4 w-6" />
+    </div>
   )
 }

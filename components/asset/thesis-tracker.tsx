@@ -16,12 +16,12 @@ export function ThesisTracker({ theses, asset }: { theses: Thesis[]; asset: Asse
   return (
     <SquircleSurface
       as="nav"
-      aria-label="Tracker de tesis"
+      aria-label="Thesis tracker"
       cornerRadius={20}
       elevation={1}
       className="flex flex-col gap-2 p-4"
     >
-      <h2 className="text-sm font-medium text-muted-foreground">Tesis ({theses.length})</h2>
+      <h2 className="text-sm font-medium text-muted-foreground">Theses ({theses.length})</h2>
       <ul className="flex flex-col gap-1">
         {theses.map((thesis) => (
           <li key={thesis.id}>
@@ -34,7 +34,7 @@ export function ThesisTracker({ theses, asset }: { theses: Thesis[]; asset: Asse
         onClick={() => markCameFromFeed()}
         className="mt-1 flex min-h-11 items-center text-sm font-medium text-foreground hover:underline"
       >
-        Ver todas →
+        See all →
       </Link>
     </SquircleSurface>
   )
@@ -59,7 +59,7 @@ function TrackerRow({ thesis, assetPriceUsd }: { thesis: Thesis; assetPriceUsd: 
           <br />
           <span className="tabular-nums">
             {formatPercent(((thesis.targetPrice - assetPriceUsd) / assetPriceUsd) * 100)} ·{" "}
-            {daysRemaining(thesis.deadline)} días
+            {daysRemaining(thesis.deadline)} days
           </span>
         </p>
       ) : (
@@ -68,7 +68,7 @@ function TrackerRow({ thesis, assetPriceUsd }: { thesis: Thesis; assetPriceUsd: 
           {formatCurrency(thesis.targetPrice, "USD")} · {formatAbsolute(thesis.deadline)}
           <br />
           {getConsensusMismatchLabel(thesis) ??
-            (getConsensus(thesis) === "FOR" ? "Consenso a favor" : "Consenso en contra")}
+            (getConsensus(thesis) === "FOR" ? "Consensus for" : "Consensus against")}
           {" · "}
           <span className="tabular-nums">
             ▲{thesis.upvotes} ▼{thesis.downvotes}

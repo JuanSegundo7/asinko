@@ -12,35 +12,35 @@ const MONTH = 30 * DAY
 export function formatRelative(iso: string, now: Date = MOCK_NOW): string {
   const diff = now.getTime() - new Date(iso).getTime()
 
-  if (diff < MINUTE) return "recién"
+  if (diff < MINUTE) return "just now"
   if (diff < HOUR) {
     const mins = Math.floor(diff / MINUTE)
-    return `hace ${mins}m`
+    return `${mins}m ago`
   }
   if (diff < DAY) {
     const hours = Math.floor(diff / HOUR)
-    return `hace ${hours}h`
+    return `${hours}h ago`
   }
   if (diff < MONTH) {
     const days = Math.floor(diff / DAY)
-    return `hace ${days} día${days === 1 ? "" : "s"}`
+    return `${days} day${days === 1 ? "" : "s"} ago`
   }
   const months = Math.floor(diff / MONTH)
-  return `hace ${months} mes${months === 1 ? "" : "es"}`
+  return `${months} month${months === 1 ? "" : "s"} ago`
 }
 
-/** "15 mar 2027" — para deadlines y fechas absolutas compactas. */
+/** "Mar 15, 2027" — para deadlines y fechas absolutas compactas. */
 export function formatAbsolute(iso: string): string {
-  return new Intl.DateTimeFormat("es-AR", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",
   }).format(new Date(iso))
 }
 
-/** "15 de marzo de 2027, 00:00" — para el atributo title/tooltip con la fecha completa. */
+/** "March 15, 2027, 00:00" — para el atributo title/tooltip con la fecha completa. */
 export function formatAbsoluteFull(iso: string): string {
-  return new Intl.DateTimeFormat("es-AR", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -72,7 +72,7 @@ export function formatScore(upvotes: number, downvotes: number): string {
 }
 
 export function voteAriaLabel(upvotes: number, downvotes: number): string {
-  return `${upvotes} votos a favor, ${downvotes} en contra, puntaje ${formatScore(upvotes, downvotes)}`
+  return `${upvotes} upvotes, ${downvotes} downvotes, score ${formatScore(upvotes, downvotes)}`
 }
 
 /** Shell de formato fijo (en-US) para que el símbolo/agrupación no dependa del locale del server vs. cliente; Intl igual respeta los decimales propios de cada divisa (JPY sin decimales). */

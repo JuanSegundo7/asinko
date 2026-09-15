@@ -12,14 +12,14 @@ export function ActivitySummary({ posts, theses }: { posts: Post[]; theses: Thes
 
   return (
     <SquircleSurface cornerRadius={20} elevation={1} className="p-4">
-      <h2 className="text-sm font-medium text-muted-foreground">Actividad</h2>
+      <h2 className="text-sm font-medium text-muted-foreground">Activity</h2>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        <span className="font-mono tabular-nums text-foreground">{totalPieces}</span> publicaciones
+        <span className="font-mono tabular-nums text-foreground">{totalPieces}</span> posts
         {" · "}
-        <span className="font-mono tabular-nums text-foreground">{totalComments}</span> comentarios
+        <span className="font-mono tabular-nums text-foreground">{totalComments}</span> comments
         {" · "}
-        <span className="font-mono tabular-nums text-foreground">{correctAgainstConsensus}</span> tesis
-        acertada{correctAgainstConsensus === 1 ? "" : "s"} contra el consenso
+        <span className="font-mono tabular-nums text-foreground">{correctAgainstConsensus}</span>{" "}
+        {correctAgainstConsensus === 1 ? "thesis" : "theses"} correct against consensus
       </p>
     </SquircleSurface>
   )

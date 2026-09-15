@@ -57,7 +57,7 @@ export function CurrencySelector() {
 
   return (
     <Select value={current ?? "USD"} onValueChange={handleChange}>
-      <SelectTrigger aria-label="Divisa" className="min-h-11 font-medium">
+      <SelectTrigger aria-label="Currency" className="min-h-11 font-medium">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

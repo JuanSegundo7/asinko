@@ -15,7 +15,7 @@ export function ThesisStatusBadge({
     return (
       <Badge variant="outline" className={cn("border-primary/30 bg-primary/10 text-primary", className)}>
         <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
-        Abierta
+        Open
       </Badge>
     )
   }
@@ -31,7 +31,7 @@ export function ThesisStatusBadge({
       )}
     >
       <span className={cn("size-1.5 rounded-full", isCorrect ? "bg-positive" : "bg-negative")} aria-hidden="true" />
-      Cerrada · {isCorrect ? "Acertada" : "Incorrecta"}
+      Closed · {isCorrect ? "Correct" : "Incorrect"}
     </Badge>
   )
 }

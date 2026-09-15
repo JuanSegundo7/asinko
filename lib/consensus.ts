@@ -15,5 +15,5 @@ export function getConsensusMismatchLabel(thesis: Thesis): string | null {
   const matches = (consensus === "FOR" && outcomeIsCorrect) || (consensus === "AGAINST" && !outcomeIsCorrect)
   if (matches) return null
 
-  return outcomeIsCorrect ? "Acertó contra el consenso" : "Falló pese al consenso"
+  return outcomeIsCorrect ? "Right against consensus" : "Wrong despite consensus"
 }
