@@ -21,6 +21,7 @@ export function UserAvatar({
         alt=""
         width={size}
         height={size}
+        style={{ width: size, height: size }}
         className={cn("shrink-0 rounded-full object-cover", className)}
       />
     )
@@ -28,8 +29,9 @@ export function UserAvatar({
 
   return (
     <div
+      style={{ width: size, height: size }}
       className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs text-muted-foreground",
+        "flex shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs text-muted-foreground",
         className
       )}
       aria-hidden="true"
