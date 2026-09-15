@@ -72,17 +72,34 @@ export function SquircleSurface({
         outerClassName
       )}
       {...props}
+      // El box-shadow sigue la geometría real del elemento (border-box + border-radius), no el
+      // clip-path de las capas de adentro. Sin este radio acá, la sombra es un rectángulo recto
+      // que sobresale en las esquinas más allá de donde termina la curva visible del contenido.
+      // No es un squircle real (border-radius normal), pero alcanza para que la sombra no se note
+      // cuadrada — nadie percibe la diferencia de curvatura en una sombra difusa. Va después de
+      // `...props` a propósito: si algún caller futuro pasa su propio `style`, este radio no se
+      // pierde (se combinaría con `props.style` si hiciera falta, hoy ningún caller lo usa).
+      style={{ borderRadius: cornerRadius }}
     >
+      {/*
+        `borderRadius` en las dos capas de adentro, siempre — no solo cuando `clipPath` ya está
+        listo. `useSquircle` mide con ResizeObserver: el primer frame no tiene clip-path (ver su
+        comentario), así que sin este fallback la esquina se ve recta un frame y recién después
+        curva — un parpadeo muy visible en skeletons, que montan y desmontan rápido y en cantidad.
+        Con `borderRadius` de base, ese primer frame ya se ve razonablemente curvo (border-radius
+        normal, no squircle real) y el cambio a clip-path cuando llega es imperceptible.
+      */}
       <div
         ref={borderRef}
-        style={borderClip ? { clipPath: borderClip } : undefined}
+        style={{ borderRadius: cornerRadius, ...(borderClip ? { clipPath: borderClip } : {}) }}
         className={cn("h-full", borderWidth > 0 ? borderColorClassName : undefined)}
       >
         <div
           ref={contentRef}
           style={{
-            ...(contentClip ? { clipPath: contentClip } : undefined),
+            borderRadius: Math.max(cornerRadius - borderWidth, 0),
             margin: borderWidth,
+            ...(contentClip ? { clipPath: contentClip } : {}),
           }}
           className={cn("h-full", backgroundClassName, className)}
         >

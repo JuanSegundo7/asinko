@@ -109,14 +109,26 @@
   }
 }
 
+/* Scroll suave para saltos de ancla (franja de tesis → #theses, deep links a #comments, "Ver
+   todas"/"Ver más" con scrollIntoView) — spatial consistency: se ve hacia dónde se mueve la
+   página en vez de teletransportarse. Opt-in solo sin `prefers-reduced-motion`, no al revés:
+   el default de la plataforma ya es instantáneo, así que no hace falta un override explícito ahí. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 :root {
   /* Curvas de easing propias — las de CSS por defecto son demasiado planas para sentirse intencionales. */
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
 
-  /* Escala de elevación (D10): sombras suaves y grandes, no la sombra dura por defecto del navegador. */
-  --shadow-elevation-1: 0 1px 2px rgb(0 0 0 / 0.24), 0 2px 8px rgb(0 0 0 / 0.16);
-  --shadow-elevation-2: 0 4px 16px rgb(0 0 0 / 0.32), 0 2px 6px rgb(0 0 0 / 0.2);
-  --shadow-elevation-3: 0 12px 48px rgb(0 0 0 / 0.45), 0 4px 12px rgb(0 0 0 / 0.3);
+  /* Escala de elevación (D10): sombras suaves y grandes, no la sombra dura por defecto del
+     navegador — dos capas (una ajustada para definir el borde, otra difusa para la profundidad),
+     estilo iOS. Subidas de opacidad para que contrasten más contra el fondo oscuro. */
+  --shadow-elevation-1: 0 1px 3px rgb(0 0 0 / 0.32), 0 3px 10px rgb(0 0 0 / 0.24);
+  --shadow-elevation-2: 0 5px 20px rgb(0 0 0 / 0.42), 0 2px 8px rgb(0 0 0 / 0.28);
+  --shadow-elevation-3: 0 16px 56px rgb(0 0 0 / 0.55), 0 6px 16px rgb(0 0 0 / 0.4);
 }
 
 /**
@@ -124,14 +136,19 @@
  * tab bar, drawer) — nunca en cards de contenido en flujo normal, donde no hay nada detrás que
  * desenfocar (ver DECISIONS.md). Fallback a superficie sólida si el usuario pidió menos transparencia.
  */
+/*
+ * La opacidad base tiene que alcanzar para leer el texto de atrás AUNQUE `backdrop-filter` no
+ * aplique (algunos navegadores/webviews mobile lo ignoran silenciosamente, sin fallback visual):
+ * el blur es la mejora, no lo que sostiene la legibilidad.
+ */
 .glass-surface {
-  background: color-mix(in oklch, var(--card) 72%, transparent);
+  background: color-mix(in oklch, var(--card) 90%, transparent);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
 }
 
 .glass-surface-dense {
-  background: color-mix(in oklch, var(--card) 85%, transparent);
+  background: color-mix(in oklch, var(--card) 94%, transparent);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
 }
@@ -145,9 +162,17 @@
   }
 }
 
-/* Feedback de presión: instantáneo, sutil, solo transform (no dispara layout/paint). */
+/*
+ * Feedback de presión: instantáneo, sutil, solo transform (no dispara layout/paint) + color, para
+ * los toggles (sort, filtros, rango del gráfico) que cambian de estado activo al mismo tiempo que
+ * se presionan. Ambas transiciones van en la MISMA regla a propósito: esta clase vive afuera de
+ * cualquier `@layer`, así que en la cascada le gana a cualquier utilidad de Tailwind (`@layer
+ * utilities`, más baja prioridad que CSS sin capa) — un `transition-colors` de Tailwind puesto en
+ * el mismo elemento nunca llegaría a aplicarse, `transition` es una propiedad, no se combinan dos
+ * declaraciones de fuentes distintas.
+ */
 .press-feedback {
-  transition: transform 150ms var(--ease-out-strong);
+  transition: transform 150ms var(--ease-out-strong), color 150ms ease, background-color 150ms ease;
 }
 .press-feedback:active {
   transform: scale(0.97);
@@ -172,6 +197,32 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stagger-item {
+    animation: none;
+  }
+}
+
+/* Entrada al navegar entre páginas dentro de /assets/[ticker] (app/assets/[ticker]/template.tsx
+   — un template, no un layout, remonta en cada navegación). Preventing a jarring change: sin esto
+   el contenido nuevo aparece de golpe (teletransporte), sobre todo notorio yendo feed -> detalle
+   o volviendo. Mismo patrón que stagger-item (keyframe, transform+opacity, corre fuera del hilo
+   principal) pero sin stagger — es una sola entrada de página, no una lista. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-in {
+  animation: page-in 200ms var(--ease-out-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-in {
     animation: none;
   }
 }
