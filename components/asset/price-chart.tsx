@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { cn } from "cn"
+import { Skeleton } from "@/components/ui/skeleton"
 import { formatPercentPrecise } from "@/lib/format"
 import type { PricePoint, PriceRange } from "@/lib/types"
 
@@ -9,8 +10,8 @@ const RANGES: { key: PriceRange; label: string; days: number }[] = [
   { key: "7D", label: "7D", days: 7 },
   { key: "1M", label: "1M", days: 30 },
   { key: "3M", label: "3M", days: 90 },
-  { key: "1A", label: "1A", days: 365 },
-  { key: "TODO", label: "Todo", days: Infinity },
+  { key: "1A", label: "1Y", days: 365 },
+  { key: "TODO", label: "All", days: Infinity },
 ]
 
 function filterByRange(history: PricePoint[], days: number): PricePoint[] {
@@ -70,9 +71,9 @@ export function PriceChart({ history }: { history: PricePoint[] }) {
       <svg
         viewBox="0 0 100 32"
         preserveAspectRatio="none"
-        className={cn("mt-2 h-20 w-full overflow-visible", colorClass)}
+        className={cn("mt-2 h-16 w-full overflow-visible", colorClass)}
         role="img"
-        aria-label={`Precio de NVDA en el rango ${rangeDef.label}, variación ${formatPercentPrecise(changePct)}`}
+        aria-label={`NVDA price over the ${rangeDef.label} range, change ${formatPercentPrecise(changePct)}`}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -84,7 +85,7 @@ export function PriceChart({ history }: { history: PricePoint[] }) {
         <path d={linePath} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
       </svg>
 
-      <div role="group" aria-label="Rango del gráfico" className="mt-2 flex items-center gap-0.5 overflow-x-auto">
+      <div role="group" aria-label="Chart range" className="mt-2 flex items-center gap-0.5 overflow-x-auto">
         {RANGES.map((r) => (
           <button
             key={r.key}
@@ -95,11 +96,38 @@ export function PriceChart({ history }: { history: PricePoint[] }) {
               "press-feedback min-h-11 shrink-0 rounded-md px-2.5 text-xs font-medium",
               range === r.key
                 ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                : "bg-muted/40 text-muted-foreground hover:bg-accent hover:text-foreground"
             )}
           >
             {r.label}
           </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Calca la forma real de `PriceChart`: línea de % arriba, área del gráfico, fila de botones de rango abajo. */
+export function PriceChartSkeleton() {
+  return (
+    <div>
+      <div className="flex items-baseline gap-2">
+        <Skeleton className="h-4 w-12" />
+        <Skeleton className="h-3 w-6" />
+      </div>
+
+      <Skeleton className="mt-2 h-16 w-full rounded-md" />
+
+      {/* min-h-11 en el contenedor, no en el Skeleton visible: los botones reales son 44px de
+          alto (mínimo táctil), pero solo por el `min-h-11` del botón — el texto real ocupa mucho
+          menos y queda centrado adentro. Si el Skeleton mismo fuera de 44px se vería como un
+          bloque gris desproporcionado; reservando el alto real en el contenedor evita el salto de
+          tamaño cuando llega la data sin inventar un placeholder más grande de lo que se ve. */}
+      <div className="mt-2 flex items-center gap-0.5">
+        {RANGES.map((r) => (
+          <div key={r.key} className="flex min-h-11 w-9 shrink-0 items-center justify-center">
+            <Skeleton className="h-[26px] w-9 rounded-md" />
+          </div>
         ))}
       </div>
     </div>
