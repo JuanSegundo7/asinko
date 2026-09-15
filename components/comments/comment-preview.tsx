@@ -1,4 +1,5 @@
 import { UserAvatar } from "@/components/shell/user-avatar"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Comment } from "@/lib/types"
 
 export function CommentPreview({ comments }: { comments: Comment[] }) {
@@ -19,11 +20,16 @@ export function CommentPreview({ comments }: { comments: Comment[] }) {
   )
 }
 
+/** Calca la forma real de `CommentPreview`: avatar 20px + línea de texto, por cada comentario de preview. */
 export function CommentPreviewSkeleton() {
   return (
-    <div className="mt-3 flex flex-col gap-2 border-l-2 border-border pl-3">
-      <div className="h-4 w-11/12 animate-pulse rounded bg-muted" />
-      <div className="h-4 w-9/12 animate-pulse rounded bg-muted" />
-    </div>
+    <ul className="mt-3 flex flex-col gap-2 border-l-2 border-border pl-3">
+      {[0, 1].map((i) => (
+        <li key={i} className="flex items-start gap-1.5">
+          <Skeleton className="mt-0.5 size-5 shrink-0 rounded-full" />
+          <Skeleton className="h-4 w-full" />
+        </li>
+      ))}
+    </ul>
   )
 }

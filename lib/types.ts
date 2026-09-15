@@ -32,6 +32,7 @@ export type PriceRange = "7D" | "1M" | "3M" | "1A" | "TODO"
 export type Comment = {
   id: string
   contentId: string
+  parentId: string | null // null = comentario de primer nivel; si no, id del comentario de primer nivel al que responde (threading de un solo nivel: una respuesta nunca puede tener a su vez respuestas)
   author: User
   body: string
   createdAt: string
@@ -39,6 +40,9 @@ export type Comment = {
   downvotes: number
   userVote: UserVote
 }
+
+/** Comentario de primer nivel con sus respuestas ya resueltas — así lo devuelve la API, sin paginación aparte para las respuestas (hay pocas, no hace falta). */
+export type CommentWithReplies = Comment & { replies: Comment[] }
 
 export type BaseContent = {
   id: string

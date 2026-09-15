@@ -21,8 +21,8 @@ import {
 import { MOCK_NOW } from "./format"
 import { toggleVote } from "./vote"
 import type {
-  Comment,
   CommentSort,
+  CommentWithReplies,
   Post,
   Thesis,
   ThesisStatus,
@@ -44,7 +44,8 @@ export const queryKeys = {
 }
 
 type AssetContent = { posts: Post[]; theses: Thesis[] }
-type CommentsPage = { items: Comment[]; total: number }
+/** `totalTopLevel` alimenta "Ver N más" (paginación de primer nivel); `totalAll` alimenta el header "Comentarios (N)" (primer nivel + respuestas). Ver `getComments` en lib/api.ts. */
+type CommentsPage = { items: CommentWithReplies[]; totalTopLevel: number; totalAll: number }
 
 export function useAssetQuery(ticker: string) {
   return useQuery({
@@ -108,9 +109,11 @@ export function useCommentsInfiniteQuery(
     queryFn: ({ pageParam }) =>
       getComments(contentId, { offset: pageParam, limit: pageSize, sort }),
     initialPageParam: 0,
+    // El offset pagina sobre comentarios de PRIMER NIVEL: cada `item` cargado ya trae sus respuestas
+    // adentro (no pesan en este conteo), así que `loaded` tiene que contar `items`, no respuestas.
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce((sum, p) => sum + p.items.length, 0)
-      return loaded < lastPage.total ? loaded : undefined
+      return loaded < lastPage.totalTopLevel ? loaded : undefined
     },
   })
 }
@@ -186,7 +189,16 @@ export function useVoteCommentMutation() {
             ...data,
             pages: data.pages.map((page) => ({
               ...page,
-              items: page.items.map((c) => (c.id === id ? toggleVote(c, direction) : c)),
+              // El voto puede caer en un comentario de primer nivel o en una de sus respuestas
+              // (threading de un solo nivel: nunca más profundo que eso).
+              items: page.items.map((c) => {
+                if (c.id === id) return toggleVote(c, direction)
+                const replyIndex = c.replies.findIndex((r) => r.id === id)
+                if (replyIndex === -1) return c
+                const replies = [...c.replies]
+                replies[replyIndex] = toggleVote(replies[replyIndex], direction)
+                return { ...c, replies }
+              }),
             })),
           }
         }
@@ -203,15 +215,29 @@ export function useVoteCommentMutation() {
   })
 }
 
-type AddCommentVars = { contentId: string; body: string; sort: CommentSort }
+type AddCommentVars = {
+  contentId: string
+  body: string
+  sort: CommentSort
+  /** Si viene seteado, es una respuesta a ESE comentario de primer nivel (nunca a otra respuesta). */
+  parentId?: string | null
+}
 
-/** Alta optimista de comentario: aparece arriba de la lista visible al instante (D3), independientemente del sort activo. */
+/**
+ * Alta optimista de comentario o respuesta (D3 + threading de un solo nivel):
+ * - Top-level: aparece arriba de la primera página visible, sea cual sea el sort activo.
+ * - Respuesta: se busca su padre en TODAS las páginas cargadas y se le agrega al final de `replies`.
+ * En ambos casos se suma 1 a `totalAll` en todas las páginas (así el header "Comentarios (N)" nunca
+ * queda desactualizado, aunque el padre de una respuesta viva en una página distinta de la primera)
+ * y 1 a `totalTopLevel` solo cuando es top-level.
+ */
 export function useAddCommentMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ contentId, body }: AddCommentVars) => addComment(contentId, body),
-    onMutate: async ({ contentId, body, sort }: AddCommentVars) => {
+    mutationFn: ({ contentId, body, parentId }: AddCommentVars) =>
+      addComment(contentId, body, parentId ?? null),
+    onMutate: async ({ contentId, body, sort, parentId = null }: AddCommentVars) => {
       const key = queryKeys.comments(contentId, sort)
       await queryClient.cancelQueries({ queryKey: key })
       const previous = queryClient.getQueryData<{
@@ -219,36 +245,95 @@ export function useAddCommentMutation() {
         pageParams: number[]
       }>(key)
 
-      const optimisticComment: Comment = {
+      const optimisticComment: CommentWithReplies = {
         id: `optimistic-${crypto.randomUUID()}`,
         contentId,
+        parentId,
         author: { handle: "vos" },
         body,
         createdAt: MOCK_NOW.toISOString(),
         upvotes: 0,
         downvotes: 0,
         userVote: null,
+        replies: [],
       }
 
       queryClient.setQueryData(key, (data: typeof previous) => {
         if (!data) return data
-        const pages = [...data.pages]
-        pages[0] = {
-          ...pages[0],
-          items: [optimisticComment, ...pages[0].items],
-          total: pages[0].total + 1,
-        }
+
+        let attached = false
+        const pages = data.pages.map((page, pageIndex) => {
+          const totalAll = page.totalAll + 1
+
+          if (parentId) {
+            if (attached) return { ...page, totalAll }
+            const parentIndex = page.items.findIndex((c) => c.id === parentId)
+            if (parentIndex === -1) return { ...page, totalAll }
+            attached = true
+            const items = [...page.items]
+            items[parentIndex] = {
+              ...items[parentIndex],
+              replies: [...items[parentIndex].replies, optimisticComment],
+            }
+            return { ...page, items, totalAll }
+          }
+
+          const totalTopLevel = page.totalTopLevel + 1
+          if (pageIndex === 0) {
+            return { ...page, items: [optimisticComment, ...page.items], totalAll, totalTopLevel }
+          }
+          return { ...page, totalAll, totalTopLevel }
+        })
+
         return { ...data, pages }
       })
 
-      return { previous, contentId, sort }
+      return { previous, contentId, sort, parentId, optimisticId: optimisticComment.id }
     },
     onError: (_err, _vars, ctx) => {
       if (!ctx) return
       queryClient.setQueryData(queryKeys.comments(ctx.contentId, ctx.sort), ctx.previous)
     },
+    /**
+     * Reemplaza el comentario optimista por el real EN EL MISMO LUGAR, en vez de invalidar la
+     * lista y dejar que un refetch la reordene por sort — un comentario nuevo tiene 0 votos, así
+     * que con sort "Top" un refetch lo manda al final, y el usuario ve su propio comentario
+     * aparecer arriba un instante y "saltar" abajo de todo apenas resuelve. D3 dice "el nuevo
+     * aparece arriba": eso vale para el resto de la sesión de esta vista, no solo el instante
+     * optimista.
+     */
+    onSuccess: (realComment, _vars, ctx) => {
+      if (!ctx) return
+      const key = queryKeys.comments(ctx.contentId, ctx.sort)
+      queryClient.setQueryData(
+        key,
+        (data: { pages: CommentsPage[]; pageParams: number[] } | undefined) => {
+          if (!data) return data
+          const pages = data.pages.map((page) => {
+            if (ctx.parentId) {
+              const parentIndex = page.items.findIndex((c) => c.id === ctx.parentId)
+              if (parentIndex === -1) return page
+              const items = [...page.items]
+              items[parentIndex] = {
+                ...items[parentIndex],
+                replies: items[parentIndex].replies.map((r) =>
+                  r.id === ctx.optimisticId ? realComment : r
+                ),
+              }
+              return { ...page, items }
+            }
+            const items = page.items.map((c) =>
+              c.id === ctx.optimisticId ? { ...realComment, replies: [] } : c
+            )
+            return { ...page, items }
+          })
+          return { ...data, pages }
+        }
+      )
+    },
     onSettled: (_data, _err, vars) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.comments(vars.contentId, vars.sort) })
+      // Ojo: NO se invalida queryKeys.comments acá a propósito (ver onSuccess) — sí el resto,
+      // para que "N comentarios" en la card/tracker/actividad quede al día.
       queryClient.invalidateQueries({ queryKey: queryKeys.post(vars.contentId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.thesis(vars.contentId) })
       queryClient.invalidateQueries({ queryKey: ["content"] })

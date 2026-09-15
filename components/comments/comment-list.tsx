@@ -21,19 +21,24 @@ export function CommentList({ contentId }: { contentId: string }) {
 
   useEffect(() => {
     // Solo al montar: es el foco inicial al abrir el detalle, no debe repetirse en cada re-render.
-    if (window.location.hash === "#comentarios") {
-      document.getElementById("comentarios")?.scrollIntoView({ block: "start" })
+    if (window.location.hash === "#comments") {
+      document.getElementById("comments")?.scrollIntoView({ block: "start" })
     }
   }, [])
 
-  const comments = data?.pages.flatMap((page) => page.items) ?? []
-  const total = data?.pages[0]?.total ?? 0
+  // `items` son comentarios de PRIMER NIVEL (cada uno con sus respuestas ya adentro, ver getComments).
+  const topLevelComments = data?.pages.flatMap((page) => page.items) ?? []
+  // Header "Comentarios (N)": total real, primer nivel + respuestas.
+  const totalAll = data?.pages[0]?.totalAll ?? 0
+  // "Ver N más": cuenta lo que falta cargar de PRIMER NIVEL únicamente (las respuestas de lo ya
+  // cargado no pesan acá, ya están todas visibles).
+  const totalTopLevel = data?.pages[0]?.totalTopLevel ?? 0
 
   return (
-    <section id="comentarios" className="scroll-mt-16">
+    <section id="comments" className="scroll-mt-16">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-foreground">
-          Comentarios{isPending ? "" : ` (${total})`}
+          Comments{isPending ? "" : ` (${totalAll})`}
         </h2>
         <CommentSort value={sort} onChange={setSort} />
       </div>
@@ -48,14 +53,14 @@ export function CommentList({ contentId }: { contentId: string }) {
             <CommentItemSkeleton key={i} />
           ))}
         </ul>
-      ) : comments.length === 0 ? (
+      ) : topLevelComments.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">
-          Todavía no hay comentarios. Sé el primero.
+          No comments yet. Be the first.
         </p>
       ) : (
         <ul className="mt-4">
-          {comments.map((comment) => (
-            <CommentItem key={comment.id} comment={comment} />
+          {topLevelComments.map((comment, index) => (
+            <CommentItem key={comment.id} comment={comment} sort={sort} index={index} />
           ))}
         </ul>
       )}
@@ -67,7 +72,9 @@ export function CommentList({ contentId }: { contentId: string }) {
           disabled={isFetchingNextPage}
           className="press-feedback mt-2 min-h-11 text-sm font-medium text-foreground hover:underline disabled:opacity-50"
         >
-          {isFetchingNextPage ? "Cargando…" : `Ver ${total - comments.length} comentarios más`}
+          {isFetchingNextPage
+            ? "Loading…"
+            : `See ${totalTopLevel - topLevelComments.length} more comments`}
         </button>
       )}
     </section>

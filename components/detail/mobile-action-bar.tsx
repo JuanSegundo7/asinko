@@ -38,7 +38,7 @@ export function MobileActionBar({
         className="flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <MessageSquare className="size-4" aria-hidden="true" />
-        Comentar
+        Comment
       </a>
     </div>
   )

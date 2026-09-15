@@ -11,15 +11,15 @@ export function CommentSort({
   onChange: (value: CommentSortValue) => void
 }) {
   return (
-    <div className="flex items-center gap-1 text-sm" role="group" aria-label="Ordenar comentarios">
+    <div className="flex items-center gap-1 text-sm" role="group" aria-label="Sort comments">
       <SortButton active={value === "TOP"} onClick={() => onChange("TOP")}>
-        Más votados
+        Top
       </SortButton>
       <span aria-hidden="true" className="text-muted-foreground">
         ·
       </span>
       <SortButton active={value === "RECENT"} onClick={() => onChange("RECENT")}>
-        Recientes
+        Recent
       </SortButton>
     </div>
   )
