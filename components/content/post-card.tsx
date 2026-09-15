@@ -28,7 +28,7 @@ export function PostCard({ post, className }: { post: Post; className?: string }
         href={href}
         scroll={false}
         onClick={() => markCameFromFeed(href)}
-        aria-label={`Ver posteo completo de @${post.author.handle}`}
+        aria-label={`View full post by @${post.author.handle}`}
         className="absolute inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       />
 
@@ -45,12 +45,6 @@ export function PostCard({ post, className }: { post: Post; className?: string }
         {post.body}
       </p>
 
-      {previewPending ? (
-        <CommentPreviewSkeleton />
-      ) : (
-        <CommentPreview comments={previewComments ?? []} />
-      )}
-
       <div className="relative z-10 mt-3 flex items-center justify-between border-t border-border pt-3">
         <VoteControl
           upvotes={post.upvotes}
@@ -62,14 +56,20 @@ export function PostCard({ post, className }: { post: Post; className?: string }
           }
         />
         <Link
-          href={`${href}#comentarios`}
+          href={`${href}#comments`}
           scroll={false}
           onClick={() => markCameFromFeed(href)}
           className="relative z-10 flex min-h-11 items-center rounded px-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          {post.commentCount} comentarios
+          {post.commentCount} comments
         </Link>
       </div>
+
+      {previewPending ? (
+        <CommentPreviewSkeleton />
+      ) : (
+        <CommentPreview comments={previewComments ?? []} />
+      )}
     </SquircleSurface>
   )
 }

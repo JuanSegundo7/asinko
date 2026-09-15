@@ -6,8 +6,7 @@ import { SquircleSurface } from "@/components/ui/squircle-surface"
 import { UserAvatar } from "@/components/shell/user-avatar"
 import { VoteControl } from "./vote-control"
 import { ThesisStatusBadge } from "./thesis-status-badge"
-import { ThesisDataGrid } from "./thesis-data-grid"
-import { ConsensusVsOutcome } from "./consensus-vs-outcome"
+import { ThesisDataGrid, ThesisDataGridSkeleton } from "./thesis-data-grid"
 import { CommentPreview, CommentPreviewSkeleton } from "@/components/comments/comment-preview"
 import {
   useAssetQuery,
@@ -47,21 +46,22 @@ export function ThesisCard({ thesis, className }: { thesis: Thesis; className?: 
         href={href}
         scroll={false}
         onClick={() => markCameFromFeed(href)}
-        aria-label={`Ver tesis completa de @${thesis.author.handle}`}
+        aria-label={`View full thesis by @${thesis.author.handle}`}
         className="absolute inset-0 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
       />
 
-      <header className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <UserAvatar handle={thesis.author.handle} size={28} />
-        <ThesisStatusBadge status={thesis.status} outcome={thesis.outcome} />
-        <span className="font-medium text-foreground">@{thesis.author.handle}</span>
-        <span aria-hidden="true">·</span>
+      <header className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2">
+          <UserAvatar handle={thesis.author.handle} size={28} />
+          <ThesisStatusBadge status={thesis.status} outcome={thesis.outcome} />
+          <span className="font-medium text-foreground">@{thesis.author.handle}</span>
+        </div>
         <time dateTime={thesis.createdAt} title={formatAbsoluteFull(thesis.createdAt)}>
           {formatRelative(thesis.createdAt)}
         </time>
       </header>
 
-      <p className="mt-2 font-serif text-lg font-medium leading-snug text-foreground">
+      <p className="mt-2 text-lg font-medium leading-snug text-foreground">
         {thesis.claim}
       </p>
 
@@ -74,24 +74,12 @@ export function ThesisCard({ thesis, className }: { thesis: Thesis; className?: 
           className="mt-3"
         />
       ) : (
-        <div className="mt-3 h-20 animate-pulse rounded-lg bg-muted" />
+        <ThesisDataGridSkeleton className="mt-3" />
       )}
 
       <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-foreground">
         {thesis.reasoning}
       </p>
-
-      {isClosed && (
-        <div className="mt-3">
-          <ConsensusVsOutcome thesis={thesis} />
-        </div>
-      )}
-
-      {previewPending ? (
-        <CommentPreviewSkeleton />
-      ) : (
-        <CommentPreview comments={previewComments ?? []} />
-      )}
 
       <div className="relative z-10 mt-3 flex items-center justify-between border-t border-border pt-3">
         <VoteControl
@@ -104,14 +92,20 @@ export function ThesisCard({ thesis, className }: { thesis: Thesis; className?: 
           }
         />
         <Link
-          href={`${href}#comentarios`}
+          href={`${href}#comments`}
           scroll={false}
           onClick={() => markCameFromFeed(href)}
           className="relative z-10 flex min-h-11 items-center rounded px-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          {thesis.commentCount} comentarios
+          {thesis.commentCount} comments
         </Link>
       </div>
+
+      {previewPending ? (
+        <CommentPreviewSkeleton />
+      ) : (
+        <CommentPreview comments={previewComments ?? []} />
+      )}
     </SquircleSurface>
   )
 }
