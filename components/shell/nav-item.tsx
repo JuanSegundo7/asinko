@@ -22,13 +22,24 @@ export function NavItem({
   const inner = (
     <span
       className={cn(
-        "flex min-h-11 items-center justify-center gap-3 rounded-md px-3 text-sm font-medium transition-colors xl:justify-start",
+        "relative flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors",
         active ? "bg-primary/10 text-primary" : "text-muted-foreground",
         disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent hover:text-foreground"
       )}
     >
+      {active && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-primary"
+        />
+      )}
       <Icon className="size-5 shrink-0" aria-hidden="true" />
-      <span className="hidden xl:inline">{label}</span>
+      {/* max-width (no width: auto) para que sea transicionable — el rail arranca en 72px y
+          crece con el hover del <nav> ancestro (group), este label lo acompaña en vez de
+          aparecer de golpe cuando ya terminó de crecer. */}
+      <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-40 group-hover:opacity-100">
+        {label}
+      </span>
     </span>
   )
 
@@ -42,7 +53,7 @@ export function NavItem({
     <Tooltip>
       <TooltipTrigger render={triggerRender}>{inner}</TooltipTrigger>
       <TooltipContent side="right">
-        {disabled ? "Fuera del alcance del mockup" : label}
+        {disabled ? "Out of scope for this mockup" : label}
       </TooltipContent>
     </Tooltip>
   )

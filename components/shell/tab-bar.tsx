@@ -7,10 +7,10 @@ import { cn } from "cn"
 import { isDetailRoute } from "@/lib/routes"
 
 const ITEMS = [
-  { icon: Home, label: "Inicio", href: undefined },
-  { icon: Compass, label: "Explorar", href: undefined },
-  { icon: LineChart, label: "Activos", href: "/assets/nvda" },
-  { icon: UserRound, label: "Mi actividad", href: undefined },
+  { icon: Home, label: "Home", href: undefined },
+  { icon: Compass, label: "Explore", href: undefined },
+  { icon: LineChart, label: "Assets", href: "/assets/nvda" },
+  { icon: UserRound, label: "My Activity", href: undefined },
 ] as const
 
 /** D4: tab bar inferior mobile (mismo criterio de deshabilitados que AppNav). Se oculta dentro del detalle (D2): el panel a pantalla completa ya ocupa ese espacio. */
@@ -21,7 +21,7 @@ export function TabBar() {
 
   return (
     <nav
-      aria-label="Navegación principal"
+      aria-label="Main navigation"
       className="glass-surface-dense fixed inset-x-0 bottom-0 z-30 flex border-t border-border [padding-bottom:env(safe-area-inset-bottom)] md:hidden"
     >
       {ITEMS.map((item) => {
@@ -45,7 +45,7 @@ export function TabBar() {
             <span
               key={item.label}
               aria-disabled="true"
-              title="Fuera del alcance del mockup"
+              title="Out of scope for this mockup"
               className="flex flex-1"
             >
               {content}
